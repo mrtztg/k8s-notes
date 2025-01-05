@@ -157,17 +157,17 @@ kind: Pod
 metadata:
 // all key-values inside metadata should be in k8s defined
 //	list, like name, labales, so on
-	name: myapp-pod 
-	labels:
+    name: myapp-pod 
+    labels:
 //      but keys inside labels can be anything
-		app: myapp
+        app: myapp
 //		We can use such fields to different purpose, like filterring:
-		type: backend 
+        type: backend 
 spec:
-	containers:
+    containers:
 //      for each item of list, we use '-':
-		- name: nginx-container
-		  image: nginx
+        - name: nginx-container
+          image: nginx
 ```
 
 | Kind | Version |
