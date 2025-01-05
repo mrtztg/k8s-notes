@@ -150,28 +150,25 @@ If our Node doesn’t have enough required capacity for adding more instances, w
 
 ```yaml
 // Take care of indents. Siblings should be in the same
-   level of indents, and child of parent should have more
-   indent compared to parent
+//   level of indents, and child of parent should have more
+//   indent compared to parent
 apiVersion: v1 //refer to table
 kind: Pod
 metadata:
 // all key-values inside metadata should be in k8s defined
-	list, like name, labales, so on
+//	list, like name, labales, so on
 	name: myapp-pod 
 	labels:
-	// but keys inside labels can be anything
+//      but keys inside labels can be anything
 		app: myapp
-		// We can use such fields to different purpose, like filterring:
-		type: frontend 
+//		We can use such fields to different purpose, like filterring:
+		type: backend 
 spec:
 	containers:
-	// for each item of list, we use '-':
+//      for each item of list, we use '-':
 		- name: nginx-container
-			image: nginx
+		  image: nginx
 ```
-
-- Once you created the config file, you can create Pod using `kubectl create -f pod-definition.yml` or `kubectl apply -f pod-definition.yml`
-- 
 
 | Kind | Version |
 | --- | --- |
@@ -179,6 +176,9 @@ spec:
 | Service | v1 |
 | ReplicaSet | apps/v1 |
 | Deployment | apps/v1 |
+
+- Once you created the config file, you can create Pod using `kubectl create -f pod-definition.yml` or `kubectl apply -f pod-definition.yml`
+- 
 
 ### Exam notes
 
