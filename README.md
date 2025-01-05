@@ -1,8 +1,8 @@
 # Core Concepts
 
 ### Kubernetes Architecture
-![Kubernetes Architecture](practices/01/assets/images/01_kubernetes_architecture.png)
-![Kubenetes Architecture](practices/01/assets/images/02_kubernetes_architecture_2.png)
+![Kubernetes Architecture](assets/images/01_kubernetes_architecture.png)
+![Kubenetes Architecture](assets/images/02_kubernetes_architecture_2.png)
 - **Nodes** are physical servers, which can be on cloud or on-premise
 - **Worker Nodes** host application as container s
 - **Master Node** is response to mange, plan, monitor, schedule worker nodes
@@ -15,7 +15,7 @@
 - CRI (Container Runtime Interface) is a standard that any container (like Docker, Containerd, rkt) should’ve implement in their development to be able to used in k8s.
 - `containerd` was container part of Docker. But became an independent part a few years ago. Because with k8s we don’t need the components of Docker (like CLI, API, BUILD, AUTH, etc) `containerd`  itself will be used in k8s, not the whole Docker. `containerd` can be installed separately without Docker
 - Normally, `containerd` has `ctr` command, which has only very basic commands, which is okay when using k8s. Because k8s will be a middleman. But for debugging purposes, we can use either `nerdctl` which adds commands very similar to Docker commands to `containerd`, or we can use `crictl`, which is compatible with all `CRI` compatible containers systems including `containerd` . It commands also very similar to Docker commands
-![CRI Clients](practices/01/assets/images/03_cri_clients.png)
+![CRI Clients](assets/images/03_cri_clients.png)
 
 ### ETCD
 
@@ -24,16 +24,16 @@
 - In k8s, `ETCD` stores information like Nodes, PODs, Configs, Secrets, Accounts, Roles, Bindings, so on. So, setting is only permitted when they reflect on etcd
 - If we installed `etcd` manually, we can change the port of `etcd` panel using `etcd.service` file:
 
-![etcd.service](practices/01/assets/images/04_etcd_service.png)
+![etcd.service](assets/images/04_etcd_service.png)
 
 - 
     - But if we we installed k8s using `kubeadm`, it already installed etcd as a pod. We can explore database of etcd using etcdctl utility within this pod. For example for getting list of all keys should use `kubectl exec etcd-master -n kube-system ectdctl get / --prefit -keys-only`
     
-    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/f762a0d9-7b1f-448a-94f2-e641471f2fe4/image.png)
+    ![etcd pod in kubeadm setup](assets/images/05_etcd_kubeadm_pod.png)
     
 - In HA environment, your etcd in each instance should be aware of each other
 
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/3ea00485-088d-4cca-a141-b8dce0e214ed/image.png)
+![etcd config in manual setup](assets/images/06_ectd_manual_service.png)
 
 ### Kube-apiserver
 
@@ -41,13 +41,13 @@
     - But also, we can use **HTTP requests** directly to `kube-apiserver`, instead of using `kubectl`
 - If we installed k8s using `kubeadm`, `kube-apiserver` is installed as a pod. We can see its options within the pod definitions `cat /etc/kubernetes/manifests/kube-apiserver.yaml`
 
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/6a881511-fe30-4a2f-9f07-e7e79840381f/image.png)
+![Kube Api-Server Pod in Kubeadm setup](assets/images/07_kube_apiserver_pod_kubeadm.png)
 
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/9dc7eb83-2a0f-45e7-accb-7352a9e35f2c/image.png)
+![Kube Api-Server yaml in Kubeadm setup](assets/images/08_kub_apiserver_adm_setup_yaml.png)
 
 - But if installed k8s manually, we should also install `kube-apiserver` manually. Then we can find its options in `cat /etc/systemd/system/kube-apiserver.service`
 
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/1997c81b-ee5c-4731-93aa-d1870334eafa/image.png)
+![Kube Api-Server in manual setup](assets/images/09_kube_apiserver_manual_setup.png)
 
 - Also we can use `ps -aux | grep kube-apiserver` to see running processes of ApiServer
 - When we send a request to kube-apiserver (either via HTTP or `kubectl` ) it follows the following flow by `kube-apiserver`  (this example is pod create command)
@@ -62,13 +62,13 @@
     - `kubelet` will create the proper containers and the back the status to `kube-apiserver`
         - `kube-apiserver`  updates etcd
 
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/5148710e-6b22-4cf8-904c-13096ba73bba/image.png)
+![k8s madness](assets/images/10_k8s_madness.png)
 
 ### Kube Controller Manager
 
 - Every intelligence in k8s sits inside `Kube Controller Manager`. It has lots of controllers including the one in picture below. They’re all enabled by default when we install Kube Controller Manager, but we can disable any of them
 
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/7c8ebb74-3ba4-41d8-b815-f90274e732d8/image.png)
+![Kube Controller Manager](assets/images/11_controller_manager.png)
 
 - Controllers are like officers in master ship. Each Controller is responsible for a set of things in workers. One officers is responsible whenever worker ships comes and leave, so on.
 So, in kubernetes, Controller is responsible to make sure status of different components are in desired status (**Watch Status, Remediate Situation)**. Eg:
@@ -77,16 +77,16 @@ So, in kubernetes, Controller is responsible to make sure status of different co
 - `Kube Controller manager` will be installed automatically if we use `kubeadm` . If we installed K8S manually, we should install Controller Manager as well.
 - Its option is located in `controller-manager-master`  pod if we used `kubeadm` or in service file if we installed manually.
     
-    ![When we install k8s and Controller manager manually](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/a03df4a4-81e4-4ba3-8cfc-680c2e1e0e6f/image.png)
+    ![Controller Manager service in manual setup](assets/images/12_controller_manager_manual_service.png)
     
     When we install k8s and Controller manager manually
     
 
-![1. When install using kubeadm](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/e367bd24-43fa-4267-a331-b0424d6c8558/image.png)
+![Controller manager pod in Kubeadm setup](assets/images/13_controller_manager_pod.png.png)
 
 1. When install using kubeadm
 
-![2. To see options in k8s pod](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/a81abbf1-5725-40a9-be10-64f26a16dc1a/image.png)
+![Controller manager pod yaml in Kubeadm setup](assets/images/14_controller_manager_pod_yaml.png)
 
 2. To see options in k8s pod
 
@@ -115,11 +115,11 @@ So, in kubernetes, Controller is responsible to make sure status of different co
 But the service itself cannot join pod network by itself, because its just a visual network which lives in k8s memory, not actual component.
 So, how services can be joined to pods network? Using **Kube-proxy**. Kube-proxies run  on each Node, and whenever a new services gets created, it creates proper rules (like using `iptables`) on each Node to forward traffic to those services to the backend pods.
 
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/29cc1025-f694-4fce-ac0c-dedd1b683a80/image.png)
+![Kube-proxy](assets/images/15_kube_proxy.png)
 
 - You can install `kube-proxy` manually if you installed k8s manually. Or kubeadm will deploy it as Pod
 
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/e48b82db-258d-46a2-8b4c-0801dc8a7285/image.png)
+![Kube-proxy Pod](assets/images/16_kube_proxy_pod.png.png)
 
 ## Kubenetes Pods
 
@@ -128,11 +128,11 @@ So, how services can be joined to pods network? Using **Kube-proxy**. Kube-proxi
 - For **scaling purpose, we shouldn’t deploy another container instance in the same Pod**. Instead, it should be a Pod with the new instance.
 If our Node doesn’t have enough required capacity for adding more instances, we can add Pod to the next Nodes.
 
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/cc55f9af-e7c2-48b5-b5de-9e6e1b4d5d4c/image.png)
+![k8s Pods](assets/images/17_k8s_pods.png)
 
 - Sometimes (rarely) we may need to have more than 1 instance in a Pod, like when our main app needs a helper Sqlite DB for its quick operations and that DB isn’t needed to be accessible for other instances or other services. These instances are in the same Pod, and their network is local and isolated. Also, they have access to each other’s storage.
 
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/6afc06fe-8e9b-4b53-84e2-9148620cb602/985e7c30-d7d4-4731-8647-c7600e438521/image.png)
+![Multiple containers in a Pod](assets/images/18_k8s_containers_in_pod.png)
 
 - K8s considers all instances inside a Pod as one object. It shares volumes and volumes of Pod’s instances to each other automatically, it maps them to each other, so on. So, it removes, create the whole Pod completely. It means, for example when the helper DB or the worker app (which sits in the same Pod) gets unhealthy, k8s will kill not only the worker app in that Pod, but even helper DB instance
 - For creating Pods, we run the following cmd: `kubectl run nginx --image nginx` .
