@@ -1,8 +1,10 @@
 # Core Concepts
 
 ### Kubernetes Architecture
+
 ![Kubernetes Architecture](assets/images/01_kubernetes_architecture.png)
 ![Kubenetes Architecture](assets/images/02_kubernetes_architecture_2.png)
+
 - **Nodes** are physical servers, which can be on cloud or on-premise
 - **Worker Nodes** host application as container s
 - **Master Node** is response to mange, plan, monitor, schedule worker nodes
@@ -15,7 +17,7 @@
 - CRI (Container Runtime Interface) is a standard that any container (like Docker, Containerd, rkt) should’ve implement in their development to be able to used in k8s.
 - `containerd` was container part of Docker. But became an independent part a few years ago. Because with k8s we don’t need the components of Docker (like CLI, API, BUILD, AUTH, etc) `containerd`  itself will be used in k8s, not the whole Docker. `containerd` can be installed separately without Docker
 - Normally, `containerd` has `ctr` command, which has only very basic commands, which is okay when using k8s. Because k8s will be a middleman. But for debugging purposes, we can use either `nerdctl` which adds commands very similar to Docker commands to `containerd`, or we can use `crictl`, which is compatible with all `CRI` compatible containers systems including `containerd` . It commands also very similar to Docker commands
-![CRI Clients](assets/images/03_cri_clients.png)
+  ![CRI Clients](assets/images/03_cri_clients.png)
 
 ### ETCD
 
@@ -26,11 +28,10 @@
 
 ![etcd.service](assets/images/04_etcd_service.png)
 
-- 
-    - But if we we installed k8s using `kubeadm`, it already installed etcd as a pod. We can explore database of etcd using etcdctl utility within this pod. For example for getting list of all keys should use `kubectl exec etcd-master -n kube-system ectdctl get / --prefit -keys-only`
+- - But if we we installed k8s using `kubeadm`, it already installed etcd as a pod. We can explore database of etcd using etcdctl utility within this pod. For example for getting list of all keys should use `kubectl exec etcd-master -n kube-system ectdctl get / --prefit -keys-only`
     
     ![etcd pod in kubeadm setup](assets/images/05_etcd_kubeadm_pod.png)
-    
+
 - In HA environment, your etcd in each instance should be aware of each other
 
 ![etcd config in manual setup](assets/images/06_ectd_manual_service.png)
@@ -38,7 +39,7 @@
 ### Kube-apiserver
 
 - `kube-apiserver` is primary management service in k8s. It sits in the centre of all tasks and changes made on k8s cluster. Actually, `kubectl` command reaches to `kube-apiserver` . It’s the only service that deal with `etcd`.
-    - But also, we can use **HTTP requests** directly to `kube-apiserver`, instead of using `kubectl`
+  - But also, we can use **HTTP requests** directly to `kube-apiserver`, instead of using `kubectl`
 - If we installed k8s using `kubeadm`, `kube-apiserver` is installed as a pod. We can see its options within the pod definitions `cat /etc/kubernetes/manifests/kube-apiserver.yaml`
 
 ![Kube Api-Server Pod in Kubeadm setup](assets/images/07_kube_apiserver_pod_kubeadm.png)
@@ -51,16 +52,16 @@
 
 - Also we can use `ps -aux | grep kube-apiserver` to see running processes of ApiServer
 - When we send a request to kube-apiserver (either via HTTP or `kubectl` ) it follows the following flow by `kube-apiserver`  (this example is pod create command)
-    - Authenticate User
-    - Validate Request
-    - Retrieve data
-    - Update ETCD ( → then tells the user pod has been created, but actually it’s not yet)
-    - The kube-scheduler will periodically watched `etcd`.
-        - In this case, it’ll see there is a pod, with no Node assigned. So, it’ll define which Node should be used to place this pod.
-        - Then it asks `kube-apiserver`  to create that pod in the proper node.
-        - `kube-apiserver`  will update ETCD again and then send this call to `kubectl` in the desired Node
-    - `kubelet` will create the proper containers and the back the status to `kube-apiserver`
-        - `kube-apiserver`  updates etcd
+  - Authenticate User
+  - Validate Request
+  - Retrieve data
+  - Update ETCD ( → then tells the user pod has been created, but actually it’s not yet)
+  - The kube-scheduler will periodically watched `etcd`.
+    - In this case, it’ll see there is a pod, with no Node assigned. So, it’ll define which Node should be used to place this pod.
+    - Then it asks `kube-apiserver`  to create that pod in the proper node.
+    - `kube-apiserver`  will update ETCD again and then send this call to `kubectl` in the desired Node
+  - `kubelet` will create the proper containers and the back the status to `kube-apiserver`
+    - `kube-apiserver`  updates etcd
 
 ![k8s madness](assets/images/10_k8s_madness.png)
 
@@ -71,34 +72,36 @@
 ![Kube Controller Manager](assets/images/11_controller_manager.png)
 
 - Controllers are like officers in master ship. Each Controller is responsible for a set of things in workers. One officers is responsible whenever worker ships comes and leave, so on.
-So, in kubernetes, Controller is responsible to make sure status of different components are in desired status (**Watch Status, Remediate Situation)**. Eg:
-    - Node Controller, checks the status of nodes every 5 sec (is changeable), if is unhealthy, if stays unhealthy for 40 seconds marks is at unhealthy. If it’s unhealthy for 5 minutes, it removes pods assigned to that Node and assign pods to a healthy Node.
-    - Replication Controller, makes sure the desired number of pods are available.
-- `Kube Controller manager` will be installed automatically if we use `kubeadm` . If we installed K8S manually, we should install Controller Manager as well.
-- Its option is located in `controller-manager-master`  pod if we used `kubeadm` or in service file if we installed manually.
-    
-    ![Controller Manager service in manual setup](assets/images/12_controller_manager_manual_service.png)
-    
-    When we install k8s and Controller manager manually
-    
+  So, in kubernetes, Controller is responsible to make sure status of different components are in desired status (**Watch Status, Remediate Situation)**. Eg:
+  
+  - Node Controller, checks the status of nodes every 5 sec (is changeable), if is unhealthy, if stays unhealthy for 40 seconds marks is at unhealthy. If it’s unhealthy for 5 minutes, it removes pods assigned to that Node and assign pods to a healthy Node.
+  - Replication Controller, makes sure the desired number of pods are available.
 
-![Controller manager pod in Kubeadm setup](assets/images/13_controller_manager_pod.png.png)
+- `Kube Controller manager` will be installed automatically if we use `kubeadm` . If we installed K8S manually, we should install Controller Manager as well.
+
+- Its option is located in `controller-manager-master`  pod if we used `kubeadm` or in service file if we installed manually.
+  
+    ![Controller Manager service in manual setup](assets/images/12_controller_manager_manual_service.png)
+  
+    When we install k8s and Controller manager manually
+
+![Controller manager pod in Kubeadm setup](assets/images/13_controller_manager_pod.png)
 
 1. When install using kubeadm
 
 ![Controller manager pod yaml in Kubeadm setup](assets/images/14_controller_manager_pod_yaml.png)
 
 2. To see options in k8s pod
-
 - To see running `controller-manager` processes, run the following command on master Node: `ps -aux | grep kube-controller-manager`
+- Navigate to sector **Controller Manager** below to to learn about each controllers
 
 ### Kube Scheduler
 
 - It’s only responsible for deciding which pod goes to which Node. It won’t place pod. Placing pod is responsibility of `kubelet`
 - It decides the Node based on requirements and criteria like:
-    - Resource Requirements and Limits
-    - Taints and Tolerations
-    - Node Selector/Affinity
+  - Resource Requirements and Limits
+  - Taints and Tolerations
+  - Node Selector/Affinity
 - To we can see options similar to how we did in KubeControllerManager
 
 ### Kubelet
@@ -112,8 +115,8 @@ So, in kubernetes, Controller is responsible to make sure status of different co
 ### kube-proxy
 
 - There are different solutions for bring networking between k8s pods. This communication better to not to be with IP due to its inconsistency. Better to use service to connect each other.
-But the service itself cannot join pod network by itself, because its just a visual network which lives in k8s memory, not actual component.
-So, how services can be joined to pods network? Using **Kube-proxy**. Kube-proxies run  on each Node, and whenever a new services gets created, it creates proper rules (like using `iptables`) on each Node to forward traffic to those services to the backend pods.
+  But the service itself cannot join pod network by itself, because its just a visual network which lives in k8s memory, not actual component.
+  So, how services can be joined to pods network? Using **Kube-proxy**. Kube-proxies run  on each Node, and whenever a new services gets created, it creates proper rules (like using `iptables`) on each Node to forward traffic to those services to the backend pods.
 
 ![Kube-proxy](assets/images/15_kube_proxy.png)
 
@@ -126,7 +129,7 @@ So, how services can be joined to pods network? Using **Kube-proxy**. Kube-proxi
 - Pods are the smallest object that you can create on Kubernetes
 - Container should be in Pod, it can’t be standalone
 - For **scaling purpose, we shouldn’t deploy another container instance in the same Pod**. Instead, it should be a Pod with the new instance.
-If our Node doesn’t have enough required capacity for adding more instances, we can add Pod to the next Nodes.
+  If our Node doesn’t have enough required capacity for adding more instances, we can add Pod to the next Nodes.
 
 ![k8s Pods](assets/images/17_k8s_pods.png)
 
@@ -135,11 +138,11 @@ If our Node doesn’t have enough required capacity for adding more instances, w
 ![Multiple containers in a Pod](assets/images/18_k8s_containers_in_pod.png)
 
 - K8s considers all instances inside a Pod as one object. It shares volumes and volumes of Pod’s instances to each other automatically, it maps them to each other, so on. So, it removes, create the whole Pod completely. It means, for example when the helper DB or the worker app (which sits in the same Pod) gets unhealthy, k8s will kill not only the worker app in that Pod, but even helper DB instance
-- For creating Pods, we run the following cmd: `kubectl run nginx --image nginx` .
-    - k8s will create Pod for us, and gets nginx image from Docker hub, and create instance inside that Pod.
-    - In this example, `--image nginx` means from public Docker hub, but we also can define to get image from private repo
+- For creating Pods, we run the following cmd: `kubectl run nginx --image=nginx` .
+  - k8s will create Pod for us, and gets nginx image from Docker hub, and create instance inside that Pod.
+  - In this example, `--image=nginx` means from public Docker hub, but we also can define to get image from private repo
 - For listing running Pods: `kubectl get pods` or `kubectl get pods -o wide` for detailed info
-    - By default, the created Pod won’t be accessible for end users, but we can access to the instance using k8s itself.
+  - By default, the created Pod won’t be accessible for end users, but we can access to the instance using k8s itself.
 - On `kubectl get pods` command, READY column is: `running containers in pod/total containers in pod`
 - To see spec of running Pod: `kubectl describe pod myapp-pod`
 - For deleting pods: `kubectl delete pods mywebapp`
@@ -152,16 +155,16 @@ If our Node doesn’t have enough required capacity for adding more instances, w
 // Take care of indents. Siblings should be in the same
 //   level of indents, and child of parent should have more
 //   indent compared to parent
-apiVersion: v1 //refer to table
+apiVersion: v1 //refer to table below
 kind: Pod
 metadata:
 // all key-values inside metadata should be in k8s defined
-//	list, like name, labales, so on
+//    list, like name, labales, so on
     name: myapp-pod 
     labels:
 //      but keys inside labels can be anything
         app: myapp
-//		We can use such fields to different purpose, like filterring:
+//        We can use such fields to different purpose, like filterring:
         type: backend 
 spec:
     containers:
@@ -170,17 +173,103 @@ spec:
           image: nginx
 ```
 
-| Kind | Version |
-| --- | --- |
-| Pod | v1 |
-| Service | v1 |
-| ReplicaSet | apps/v1 |
-| Deployment | apps/v1 |
+| Kind                                | Version |
+| ----------------------------------- | ------- |
+| Pod                                 | v1      |
+| Service                             | v1      |
+| ReplicaSet                          | apps/v1 |
+| Deployment                          | apps/v1 |
+| ReplicationController (Deperacated) | v1      |
 
-- Once you created the config file, you can create Pod using `kubectl create -f pod-definition.yml` or `kubectl apply -f pod-definition.yml`
-- 
+- We can also create definition YAML file by adding `dry-run` argument, like:
+  
+  ```bash
+  kubectl run redis --image=redis --dry-run=client -o yaml > redis-pod-def.yaml
+  ```
+
+- Once you created the config file, use `kubectl create -f pod-definition.yml` for creating or use `kubectl apply -f pod-definition.yml` for upsert (insert or update)
+
+# Controller Managers
+
+## ReplicationController / ReplicaSet
+
+- Why we need ReplicationController?
+  
+  1. Maintain desired number of replicas to make sure our app is always available. Replica number can be 1 (means only one instance of that app is running at the time). But 2 is better if we have HA (high availability) in mind.
+     
+     ![ha using replica](assets/images/19_highavailability_using_replica.png)
+  
+  2. Load balancing & Scalability. ReplicationController will make sure request load will splitted in all replicas. It can even deploy replicas in other Nodes if required
+     
+     ![scalability using replica](assets/images/20_scalability_using_replica.png)
+
+- **ReplicationController** and **ReplicaSet** does the same thing, but they're not the same. **ReplicaSet** is a newer version and have more capability, like `selector` in definition file.
+
+- In `spec > template` section of definition YAML file, we should have the exact code in Pod definition file except `apiVersion` and `kind` fields.
+
+- In **ReplicaSet** manager, we can define `selector` inside `spec` section. We define it to let ReplicaSet controller know that even if we deployed the similar Pod/app manually, count them as your replicas. **ReplicationController** doesn't have selector section. Sample definition file:
+  
+  ```yaml
+  // apiVersion if kind:ReplicationController
+  apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    name: myapp-replicaset
+    labels:
+      app: myapp
+      type: backend
+  spec:
+    replicas: 3 
+  // define 'selector' only if kind is ReplicaSet
+    selector:
+  // matchLabels will be used to consider all Pods with this labels (even manually created) part of this replica
+      matchLabels:
+        type: backend
+  // Inside 'template' should be exactly desired Pod definition
+    template:
+      metadata:
+        labels:
+          type: backend
+      spec:
+        containers:
+          - name: myapp
+            image: redis
+  ```
+
+```
+- For creating using replicaset or replicationController:
+
+```bash
+kubectl apply -f my_replica.yaml
+```
+
+- To see Repli status, use one of the following
+  
+  ```bash
+  # For replicationcontroller
+  kubectl get replicationcontroller
+  # For replicaset
+  kubectl get replicaset
+  ```
+  
+  - But you still can use `kubectl get pods` to list pods, you'll see replicationController added a suffix to each replica
+- To delete replicaset all all underlying PODs (ReplicationController is similar):
+  
+  ```bash
+  kubectl delete replicaset my-replica
+  ```
+
+**Scaling Replicas**
+
+- We can either
+  
+  - Update YAML file, change replica value, and then run `kubectl replace -f my-replica.yaml` command
+  
+  - Or change replicas temporarily using `kubectl scale --replicas=5 -f my-replica.yaml`
+  
+  - Or by defining the name of the created replica, instead of yaml file name `kubectl scale --replicas=5 [TYPE] [NAME]` like `kubectl scale --replicas=5 replicaset my-replicaset`
 
 ### Exam notes
 
 - k8s in exam has been installed using `kubeadm`  which
-    - already deployed etcd, Kube-Apiserver, Kube-Scheduler, Kube-Controller-Manager as Pods
+  - already deployed etcd, Kube-Apiserver, Kube-Scheduler, Kube-Controller-Manager as Pods
