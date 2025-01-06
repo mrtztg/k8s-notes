@@ -207,9 +207,38 @@ spec:
 
 - In `spec > template` section of definition YAML file, we should have the exact code in Pod definition file except `apiVersion` and `kind` fields.
 
-- In **ReplicaSet** manager, we can define `selector` inside `spec` section. We define it to let ReplicaSet controller know that even if we deployed the similar Pod/app manually, count them as your replicas. **ReplicationController** doesn't have selector section.
+- In **ReplicaSet** manager, we can define `selector` inside `spec` section. We define it to let ReplicaSet controller know that even if we deployed the similar Pod/app manually, count them as your replicas. **ReplicationController** doesn't have selector section. Sample definition file:
+  
+  ```yaml
+  // apiVersion if kind:ReplicationController
+  apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    name: myapp-replicaset
+    labels:
+      app: myapp
+      type: backend
+  spec:
+    replicas: 3 
+  // define 'selector' only if kind is ReplicaSet
+    selector:
+  // matchLabels will be used to consider all Pods with this labels (even manually created) part of this replica
+      matchLabels:
+        type: backend
+  // Inside 'template' should be exactly desired Pod definition
+    template:
+      metadata:
+        labels:
+          type: backend
+      spec:
+        containers:
+          - name: myapp
+            image: redis
+  ```
 
+```
 - For creating using replicaset or replicationController:
+
 ```bash
 kubectl apply -f my_replica.yaml
 ```
@@ -222,7 +251,23 @@ kubectl apply -f my_replica.yaml
   # For replicaset
   kubectl get replicaset
   ```
-    - But you still can use `kubectl get pods` to list pods, you'll see replicationController added a suffix to each replica.
+  
+  - But you still can use `kubectl get pods` to list pods, you'll see replicationController added a suffix to each replica
+- To delete replicaset all all underlying PODs (ReplicationController is similar):
+  
+  ```bash
+  kubectl delete replicaset my-replica
+  ```
+
+**Scaling Replicas**
+
+- We can either
+  
+  - Update YAML file, change replica value, and then run `kubectl replace -f my-replica.yaml` command
+  
+  - Or change replicas temporarily using `kubectl scale --replicas=5 -f my-replica.yaml`
+  
+  - Or by defining the name of the created replica, instead of yaml file name `kubectl scale --replicas=5 [TYPE] [NAME]` like `kubectl scale --replicas=5 replicaset my-replicaset`
 
 ### Exam notes
 
