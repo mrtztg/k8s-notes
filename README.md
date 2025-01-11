@@ -223,6 +223,7 @@ spec:
   // define 'selector' only if kind is ReplicaSet
     selector:
   // matchLabels will be used to consider all Pods with this labels (even manually created) part of this replica
+  // Also the values inside matchLabels should match labels in template section below
       matchLabels:
         type: backend
   // Inside 'template' should be exactly desired Pod definition
@@ -250,14 +251,26 @@ kubectl apply -f my_replica.yaml
   kubectl get replicationcontroller
   # For replicaset
   kubectl get replicaset
+  # or
+  kubectl get rs
   ```
   
   - But you still can use `kubectl get pods` to list pods, you'll see replicationController added a suffix to each replica
+
 - To delete replicaset all all underlying PODs (ReplicationController is similar):
   
   ```bash
   kubectl delete replicaset my-replica
   ```
+
+- To edit replica set, use the following command:
+  
+  ```bash
+  kubectl edit replicaset my-replica
+  ```
+  
+  - The changes related to POD (like POD image) won't be reflected on existing PODs of replica. You should delete them, and new ones will be created using the edited definition.
+    But changings related to Replica itself (replica number) will reflected immediately 
 
 **Scaling Replicas**
 
@@ -269,7 +282,11 @@ kubectl apply -f my_replica.yaml
   
   - Or by defining the name of the created replica, instead of yaml file name `kubectl scale --replicas=5 [TYPE] [NAME]` like `kubectl scale --replicas=5 replicaset my-replicaset`
 
-### Exam notes
+# Cheat Sheets
+
+[Kubernetes Quick Reference](https://kubernetes.io/docs/reference/kubectl/quick-reference/)
+
+# Exam notes
 
 - k8s in exam has been installed using `kubeadm`  which
   - already deployed etcd, Kube-Apiserver, Kube-Scheduler, Kube-Controller-Manager as Pods
