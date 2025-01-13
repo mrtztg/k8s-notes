@@ -282,6 +282,38 @@ kubectl apply -f my_replica.yaml
   
   - Or by defining the name of the created replica, instead of yaml file name `kubectl scale --replicas=5 [TYPE] [NAME]` like `kubectl scale --replicas=5 replicaset my-replicaset`
 
+**Deployments**
+
+- Kubernetes can handle different scenarios and strategies related to deployment to production env. Like:
+  
+  - Deploying app to multiple instances
+  
+  - Upgrading the existing docker instances gradually, not all at once
+  
+  - Rollback the changes recently been made
+  
+  - Pause, upgrade and then resume instances whenever we want to update underlying configurations of pods
+
+- Deployments in a higher hierarchy to ReplicaSet
+  
+  ![Deployments](assets/images/21_deployments.png)
+
+- Definition file of Deployments is very similar to ReplicaSet, except the `kind` field which should be `Deployment`
+
+- Use `kubectl create -f my-deployment.yaml` to create deployment.
+
+- Use `kubectl get deployment` to list created deployments. Or use `kuectl get all` to list all 
+
+### Additional Commands
+
+- Get all running components in groups
+
+```bash
+kubectl get all
+```
+
+
+
 # Cheat Sheets
 
 [Kubernetes Quick Reference](https://kubernetes.io/docs/reference/kubectl/quick-reference/)
