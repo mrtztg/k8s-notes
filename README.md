@@ -300,9 +300,13 @@ kubectl apply -f my_replica.yaml
 
 - Definition file of Deployments is very similar to ReplicaSet, except the `kind` field which should be `Deployment`
 
-- Use `kubectl create -f my-deployment.yaml` to create deployment.
+- You can created Deployments either using command, or definition file:
+  
+  1. Use `kubectl create -f my-deployment.yaml` to create deployment from definition file.
+  
+  2. Use command like `kubectl create deployment httpd-frontend --image=httpd:2.4-alpine --replicas=3` 
 
-- Use `kubectl get deployment` to list created deployments. Or use `kuectl get all` to list all 
+- Use `kubectl get deployment`  or `kubectl get deploy` to list created deployments. Or use `kuectl get all` to list all 
 
 ### Additional Commands
 
