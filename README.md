@@ -308,6 +308,10 @@ kubectl apply -f my_replica.yaml
 
 - Use `kubectl get deployment`  or `kubectl get deploy` to list created deployments. Or use `kuectl get all` to list all 
 
+
+
+
+
 ### Additional Commands
 
 - Get all running components in groups
