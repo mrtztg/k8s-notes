@@ -122,7 +122,7 @@
 
 - You can install `kube-proxy` manually if you installed k8s manually. Or kubeadm will deploy it as Pod
 
-![Kube-proxy Pod](assets/images/16_kube_proxy_pod.png.png)
+![Kube-proxy Pod](assets/images/16_kube_proxy_pod.png)
 
 ## Kubenetes Pods
 
@@ -152,23 +152,23 @@
 - Kubernetes uses yaml files as inputs for creation of objects like Pods, replicas, services, deployments, etc. It always have the 4 top level fields: `apiVersion, kind, metadata, spec`
 
 ```yaml
-// Take care of indents. Siblings should be in the same
-//   level of indents, and child of parent should have more
-//   indent compared to parent
+# Take care of indents. Siblings should be in the same
+#   level of indents, and child of parent should have more
+#   indent compared to parent
 apiVersion: v1 //refer to table below
 kind: Pod
 metadata:
-// all key-values inside metadata should be in k8s defined
-//    list, like name, labales, so on
+# all key-values inside metadata should be in k8s defined
+#    list, like name, labales, so on
     name: myapp-pod 
     labels:
-//      but keys inside labels can be anything
+#      but keys inside labels can be anything
         app: myapp
-//        We can use such fields to different purpose, like filterring:
+#        We can use such fields to different purpose, like filterring:
         type: backend 
 spec:
     containers:
-//      for each item of list, we use '-':
+#      for each item of list, we use '-':
         - name: nginx-container
           image: nginx
 ```
@@ -210,7 +210,7 @@ spec:
 - In **ReplicaSet** manager, we can define `selector` inside `spec` section. We define it to let ReplicaSet controller know that even if we deployed the similar Pod/app manually, count them as your replicas. **ReplicationController** doesn't have selector section. Sample definition file:
   
   ```yaml
-  // apiVersion if kind:ReplicationController
+  # apiVersion if kind:ReplicationController
   apiVersion: apps/v1
   kind: ReplicaSet
   metadata:
@@ -220,13 +220,13 @@ spec:
       type: backend
   spec:
     replicas: 3 
-  // define 'selector' only if kind is ReplicaSet
+  # define 'selector' only if kind is ReplicaSet
     selector:
-  // matchLabels will be used to consider all Pods with this labels (even manually created) part of this replica
-  // Also the values inside matchLabels should match labels in template section below
+  # matchLabels will be used to consider all Pods with this labels (even manually created) part of this replica
+  # Also the values inside matchLabels should match labels in template section below
       matchLabels:
         type: backend
-  // Inside 'template' should be exactly desired Pod definition
+  # Inside 'template' should be exactly desired Pod definition
     template:
       metadata:
         labels:
@@ -308,9 +308,51 @@ kubectl apply -f my_replica.yaml
 
 - Use `kubectl get deployment`  or `kubectl get deploy` to list created deployments. Or use `kuectl get all` to list all 
 
+## Services
 
+- Kubernetes services enables communication between the components inside and outside of application. It helps to connect applications to other applications or users, like communication between front-end and backend, or between user and frontend
+  
+  ![Services](assets/images/22_services.png)
 
+- Normally, the application inside k8s is not accessable from outside, excpet if we connect to k8s Node via SSH. 
+  
+  ![Connect to Pod via SSH](assets/images/23_connect_to_pod.png)
+  
+  - But using service, we can give access:
+  
+  ![Access Pod via Service](assets/images/24_access_pod_via_service.png)
 
+- **Services Type**:
+  - NodePort: To give incoming access to the Pod from ouside of the Node
+
+    ![Node Port](assets/images/25_node_port.png)
+
+    - NodePort range is `30_000` to `32_767`
+
+  - CluesterIP: Create virtual IP inside cluster to enable communication between Pods like set of front-end servers with back-end servers
+  - LoadBalancer: Enables loadBalancer in the supported cloud providers
+- Sample of definition file:
+
+  ```yaml
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: my-service
+  spec:
+    type: NodePort
+    ports:
+      - targetPort: 80 # if we don't define targetPort, will be equal to port
+        port: 80
+        nodePort: 30008 # If we don't define, it'll be first available nodePort
+    selector: # K8s uses selector, to know which Pods should be targetted.
+      app: myapp
+      type: front-end
+  ```
+- If there are more than one Pod for the specifiec 'Selector', the service will act as the load balancer and will split traffic to all targets using `Random` Algorithm. These multiple pods can be in one Node, or in multiple Nodes. Then we can use IP of any of the target Nodes to access underlying Pods of service. In the following picture `curl http://192.168.1.2:300008` or `curl http://192.168.1.3:300008` or `curl http://192.168.1.4:300008`
+
+  ![Multi Node, Multi Pod as Service Target](assets/images/26_service_target_multi_node.png)
+  
+- To create service using definition file, use `kubectl create -f my-service.yaml` and for listing the running services: `kubectl get services`
 
 ### Additional Commands
 
@@ -320,11 +362,13 @@ kubectl apply -f my_replica.yaml
 kubectl get all
 ```
 
-
-
 # Cheat Sheets
 
 [Kubernetes Quick Reference](https://kubernetes.io/docs/reference/kubectl/quick-reference/)
+
+# References
+
+[Kubernetes Awesome](https://awesome-architecture.com/devops/kubernetes/kubernetes/)
 
 # Exam notes
 
