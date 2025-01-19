@@ -323,14 +323,18 @@ kubectl apply -f my_replica.yaml
   ![Access Pod via Service](assets/images/24_access_pod_via_service.png)
 
 - **Services Type**:
-  - NodePort: To give incoming access to the Pod from ouside of the Node
+  1.  **NodePort**: To give incoming access to the Pod from ouside of the Node
 
-    ![Node Port](assets/images/25_node_port.png)
+    ![NodePort Service](assets/images/25_node_port.png)
 
     - NodePort range is `30_000` to `32_767`
 
-  - CluesterIP: Create virtual IP inside cluster to enable communication between Pods like set of front-end servers with back-end servers
-  - LoadBalancer: Enables loadBalancer in the supported cloud providers
+  2. **CluesterIP**: Create virtual IP inside cluster to enable communication between Pods like set of front-end servers with back-end servers
+      ![ClusterIP Service](assets/images/27_clusterip.png)
+  3. **LoadBalancer**: Enables loadBalancer in the supported cloud providers (like AWS, GCP, Azure). For example we pub AWS Application Load Balancer in front and Kubernetes service (with type=LoadBalancer) will do the rest of configuration in a way that the traffic will be received through the domain that is set to AWS ALB, and load will be balanced.
+    ![Load Balancer Serivce](assets/images/28_loadbalancer_service.png)
+    - Note that we still can access to underlying Pods using IP:PORT of any of the Pods as example below. But that't not our desired way of accessing. We want a single URL.
+      ![Service without endpoint](assets/images/29_service_with_endpoint.png)
 - Sample of definition file:
 
   ```yaml
@@ -339,10 +343,13 @@ kubectl apply -f my_replica.yaml
   metadata:
     name: my-service
   spec:
-    type: NodePort
+    # Possible options for type are: ClusterIP, NodePort, LoadBalancer
+    #   Default value is ClusterIP if we don't define. 
+    type: NodePort 
     ports:
       - targetPort: 80 # if we don't define targetPort, will be equal to port
         port: 80
+        # We don't define nodePort in ClusterIP
         nodePort: 30008 # If we don't define, it'll be first available nodePort
     selector: # K8s uses selector, to know which Pods should be targetted.
       app: myapp
@@ -352,8 +359,8 @@ kubectl apply -f my_replica.yaml
 
   ![Multi Node, Multi Pod as Service Target](assets/images/26_service_target_multi_node.png)
   
-- To create service using definition file, use `kubectl create -f my-service.yaml` and for listing the running services: `kubectl get services`
-
+- To create service using definition file, use `kubectl create -f my-service.yaml` and for listing the running services: `kubectl get services` or `kubectl get svc`
+- Kubernetes creates a ClusterIP in the beginning for us (I still don't know the reason behind)
 ### Additional Commands
 
 - Get all running components in groups
@@ -370,7 +377,24 @@ kubectl get all
 
 [Kubernetes Awesome](https://awesome-architecture.com/devops/kubernetes/kubernetes/)
 
-# Exam notes
+# Exam Tips
 
 - k8s in exam has been installed using `kubeadm`  which
   - already deployed etcd, Kube-Apiserver, Kube-Scheduler, Kube-Controller-Manager as Pods
+- Createing YAML files are time consuming during the exam. Instead, try to use dry-run commands to create YAML, or in some cases you can directly create from command instead of YAML
+  - Create an NGINX Pod 
+    - `kubectl run nginx --image=nginx`
+  - Generate POD Manifest YAML file (-o yaml). Don't create it(--dry-run) 
+    - `kubectl run nginx --image=nginx --dry-run=client -o yaml`
+  - Create a deployment
+    - `kubectl create deployment --image=nginx nginx`
+  - Generate Deployment YAML file (-o yaml). Don't create it(--dry-run)
+    - `kubectl create deployment --image=nginx nginx --dry-run=client -o yaml`
+  - Generate Deployment YAML file (-o yaml). Don’t create it(–dry-run) and save it to a file.
+    - `kubectl create deployment --image=nginx nginx --dry-run=client -o yaml > nginx-deployment.yaml`
+  - Make necessary changes to the file (for example, adding more replicas) and then create the deployment.
+    - `kubectl create -f nginx-deployment.yaml`
+
+  - In k8s version 1.19+, we can specify the --replicas option to create a deployment with 4 replicas.
+    - `kubectl create deployment --image=nginx nginx --replicas=4 --dry-run=client -o yaml > nginx-deployment.yaml`
+
