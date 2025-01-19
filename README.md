@@ -430,6 +430,10 @@ kubectl get all
 - `pvc` : PersistentVolumeClaims
 - `in` : Service Accounts
 
+### Arguments:
+- `-n=` : `--namespeces=`
+- `-A` : `--all-namespaces`
+
 
 # Exam Tips
 
