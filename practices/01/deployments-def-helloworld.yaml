@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-helloworld-deploy
+spec:
+  replicas: 3
+  template:
+    metadata:
+      name: my-helloworld-app
+      labels:
+        type: simple-api
+    spec:
+      containers:
+        - image: bhargavshah86/kube-test:v0.1
+          name: hello-world
+          ports:
+            - containerPort: 80
+  selector:
+    matchLabels:
+      type: simple-api
