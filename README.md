@@ -189,8 +189,6 @@ spec:
 
 - Once you created the config file, use `kubectl create -f pod-definition.yml` for creating or use `kubectl apply -f pod-definition.yml` for upsert (insert or update)
 
-# Controller Managers
-
 ## ReplicationController / ReplicaSet
 
 - Why we need ReplicationController?
@@ -237,12 +235,11 @@ spec:
             image: redis
   ```
 
-```
 - For creating using replicaset or replicationController:
 
-```bash
-kubectl apply -f my_replica.yaml
-```
+  ```bash
+  kubectl apply -f my_replica.yaml
+  ```
 
 - To see Repli status, use one of the following
   
@@ -361,6 +358,50 @@ kubectl apply -f my_replica.yaml
   
 - To create service using definition file, use `kubectl create -f my-service.yaml` and for listing the running services: `kubectl get services` or `kubectl get svc`
 - Kubernetes creates a ClusterIP in the beginning for us (I still don't know the reason behind)
+
+## Namespaces
+
+- Namespaces is like houses. People in the house (family members) call each other with their first name only. They all have access to shared resources. But when family members want to call members of other family, they should call their fullname.
+  ![Family like Namespaces](assets/images/30_namespaces_family.png)
+- Namespeces isolates its components (like Pods, etc) so they can't be altered by mistake. For example, we won't remove Pods in `prod` namespaces instead of `dev` by mistake.
+- Kubernetes automatically creates a `default` namespace for us in the creation of a cluster, and all our Pods, etc are creating in this NS. Kubernetes also craetes other Namespaces (like kube-public and kube-system) to isolate its critical components and prevent modification by mistake.
+- If we're environment and/or clluster is small, just keep using the `default` NS. But if you want to go with enterprise level setup, you can create NSes like `dev` and `prod` and so on.
+- If we access a DB in current NS using `mysql.connect("db-service")`, for accessing DB in another NS we should use `mysql.connect("db-service.dev.svc.cluster.local")`. More details about this format:
+  - `cluster.local` default domain name of k8s cluster
+  - `svc` subdomain for service
+  - `dev` actual namespaces
+  - `db-service` service name
+- Commands:
+  - `kubectl get po --namespace=dev` : --namespace is used to get resoruces in other namespaces than current one
+  - `kubectl create -f my-pod.yaml --namespace=dev` . You can define which namespace the resource should created in. Another way is adding `namespace: dev` in `metadata` section of definition file.
+  - To create namespace, you can either use command `kubectl create namespace dev` or using definition file:
+    ```yaml
+    apiVersion: v1
+    kind: namespace
+    metadata:
+      name: dev
+    ```
+  - To set another namespace as current NS, use:
+    - `kubectl config set-context $(kubectl config current-context) --namespace=dev`
+    - Now you switch to this NS and don't need to define `--namespace` parameter to accessing resources in it.
+  - To view resources in name spaces, use `--all-namespaces`, like `kubectl get po --all-namespace`
+- We can define policies for each NS using Quotas, either using command parameters or definition file:
+  ```yaml
+  apiVersion: v1
+  kind: ResourceQuota
+  metadata:
+    name: compute-quota
+    namespace: dev
+  spec:
+    hard:
+      pods: "10"
+      requests.cpu: "4"
+      requests.memory: 5Gi
+      limits.cpu: "10"
+      limits.memory: 10Gi
+  ```
+
+
 ### Additional Commands
 
 - Get all running components in groups
@@ -372,10 +413,23 @@ kubectl get all
 # Cheat Sheets
 
 [Kubernetes Quick Reference](https://kubernetes.io/docs/reference/kubectl/quick-reference/)
+[kubectl useful commands](https://faun.pub/kubectl-useful-commands-f5f47c0773f)
 
 # References
 
 [Kubernetes Awesome](https://awesome-architecture.com/devops/kubernetes/kubernetes/)
+
+# Kubernetes Shortcuts
+- `po` : Pods
+- `rs` : ReplicaSets
+- `deploy` : Deployments
+- `svc` : Services
+- `ns` : Namespaces
+- `netpol` : Network policies
+- `pv` : Persistent Volumes
+- `pvc` : PersistentVolumeClaims
+- `in` : Service Accounts
+
 
 # Exam Tips
 
