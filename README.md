@@ -237,12 +237,11 @@ spec:
             image: redis
   ```
 
-```
 - For creating using replicaset or replicationController:
 
-```bash
-kubectl apply -f my_replica.yaml
-```
+  ```bash
+  kubectl apply -f my_replica.yaml
+  ```
 
 - To see Repli status, use one of the following
   
@@ -376,6 +375,18 @@ kubectl get all
 # References
 
 [Kubernetes Awesome](https://awesome-architecture.com/devops/kubernetes/kubernetes/)
+
+# Kubernetes Shortcuts
+- `po` : Pods
+- `rs` : ReplicaSets
+- `deploy` : Deployments
+- `svc` : Services
+- `ns` : Namespaces
+- `netpol` : Network policies
+- `pv` : Persistent Volumes
+- `pvc` : PersistentVolumeClaims
+- `in` : Service Accounts
+
 
 # Exam Tips
 
