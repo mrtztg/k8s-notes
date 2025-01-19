@@ -334,7 +334,7 @@ kubectl apply -f my_replica.yaml
   3. **LoadBalancer**: Enables loadBalancer in the supported cloud providers (like AWS, GCP, Azure). For example we pub AWS Application Load Balancer in front and Kubernetes service (with type=LoadBalancer) will do the rest of configuration in a way that the traffic will be received through the domain that is set to AWS ALB, and load will be balanced.
     ![Load Balancer Serivce](assets/images/28_loadbalancer_service.png)
     - Note that we still can access to underlying Pods using IP:PORT of any of the Pods as example below. But that't not our desired way of accessing. We want a single URL.
-      ![Service without endpoint](assets/images/29_service_with_endpoint.png)
+      ![Service without endpoint](assets/images/29_service_without_endpoint.png)
 - Sample of definition file:
 
   ```yaml
