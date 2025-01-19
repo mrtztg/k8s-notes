@@ -371,6 +371,7 @@ kubectl get all
 # Cheat Sheets
 
 [Kubernetes Quick Reference](https://kubernetes.io/docs/reference/kubectl/quick-reference/)
+[kubectl useful commands](https://faun.pub/kubectl-useful-commands-f5f47c0773f)
 
 # References
 
