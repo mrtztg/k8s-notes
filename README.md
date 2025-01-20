@@ -401,8 +401,29 @@ spec:
       limits.memory: 10Gi
   ```
 
+## Imperative vs Declarative
+Kubernetes have 2 ways of managing infrastructure:
 
-### Additional Commands
+**1. Imperative**: Means we tell k8s what steps should it follow to reach to the desired infra. All the following commands are Imperative:
+- `kubectl run --image=nginx nginx`
+- `kubectl create deployment --image=nginx nginx`
+- `kubectl expose deployment nginx --port 80`
+- `kubectl edit deployment nginx` . By this command, we make change on the running deployment (which is not persistent). The actual YAML file will stay unchanged. For making changes consistent, use replace.
+- `kubectl scale deployment nginx --replicas=5`
+- `kubectl set image deployment nginx nginx=nginx:1.18`
+- `kubectl create -f nginx.yaml`
+- `kubectl replace -f nginx.yaml` . By updating the YAML file and use replace command, both config file and the running deployment will be updated.
+  - `kubectl replace --force -f nginx.yaml` . If you want to completely delete objects
+- `kubectl delete -f nginx.yaml`  
+  
+In the above comamnds, you as administrator is responsible to final result. For example, before running `replace` command, you should make sure that resource exists, or before running `create` make sure the resource doesn't exist, otherwise you'll get error.
+
+
+**2. Declarative**: Means we define the desired infra, k8s will decide what approach it should follow to reach the desired infra. For example, before creating the Replica, it checks whether it exists of not. The following command is declerative:
+- `kubectl apply -f nginx.yaml` . It's intelligent and will check resource exists before running. It's like *Upsert* in SQL.
+  - `kubectl apply -f /path/to/config-files` . To apply for all definition files in a path
+
+## Additional Commands
 
 - Get all running components in groups
 
@@ -430,12 +451,16 @@ kubectl get all
 - `pvc` : PersistentVolumeClaims
 - `in` : Service Accounts
 
+### Arguments:
+- `-n=` : `--namespeces=`
+- `-A` : `--all-namespaces`
+
 
 # Exam Tips
 
 - k8s in exam has been installed using `kubeadm`  which
   - already deployed etcd, Kube-Apiserver, Kube-Scheduler, Kube-Controller-Manager as Pods
-- Createing YAML files are time consuming during the exam. Instead, try to use dry-run commands to create YAML, or in some cases you can directly create from command instead of YAML
+- Createing YAML files are time consuming during the exam. Instead try to use imperative commands as much as possible. If complex changes required (like multiple containers, env variables, so on) try to use dry-run to save time by creating template YAML.
   - Create an NGINX Pod 
     - `kubectl run nginx --image=nginx`
   - Generate POD Manifest YAML file (-o yaml). Don't create it(--dry-run) 
@@ -451,4 +476,10 @@ kubectl get all
 
   - In k8s version 1.19+, we can specify the --replicas option to create a deployment with 4 replicas.
     - `kubectl create deployment --image=nginx nginx --replicas=4 --dry-run=client -o yaml > nginx-deployment.yaml`
+- Some additional sample commands useful in exam:
+  - `kubectl edit deployment nginx`
+  - `kubectl scale deployment nginx --replicas=5`
+  - `kubectl set image deployment nginx nginx=nginx:1.18`
+  - For creating service:
+    - `kubectl expose pod redis --port=6379 --name redis-service --dry-run=client -o yaml`
 
