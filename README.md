@@ -434,14 +434,11 @@ In the above comamnds, you as administrator is responsible to final result. For 
 kubectl get all
 ```
 
-# Cheat Sheets
+# References & Cheat Sheets
 
-[Kubernetes Quick Reference](https://kubernetes.io/docs/reference/kubectl/quick-reference/)
-[kubectl useful commands](https://faun.pub/kubectl-useful-commands-f5f47c0773f)
-
-# References
-
-[Kubernetes Awesome](https://awesome-architecture.com/devops/kubernetes/kubernetes/)
+- [Kubernetes Quick Reference](https://kubernetes.io/docs/reference/kubectl/quick-reference/)
+- [kubectl useful commands](https://faun.pub/kubectl-useful-commands-f5f47c0773f)
+- [Kubernetes Awesome](https://awesome-architecture.com/devops/kubernetes/kubernetes/)
 
 # Kubernetes Shortcuts
 - `po` : Pods
