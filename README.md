@@ -357,6 +357,9 @@ spec:
   ![Multi Node, Multi Pod as Service Target](assets/images/26_service_target_multi_node.png)
   
 - To create service using definition file, use `kubectl create -f my-service.yaml` and for listing the running services: `kubectl get services` or `kubectl get svc`
+- For creating service we can use both `create service` and `expose pod` command as below:
+  - `kubectl expose pod nginx --type=NodePort --port=80 --name=nginx-service --dry-run=client -o yaml`
+  - `kubectl create service nodeport nginx --tcp=80:80 --node-port=30080 --dry-run=client -o yaml`
 - Kubernetes creates a ClusterIP in the beginning for us (I still don't know the reason behind)
 
 ## Namespaces
@@ -475,11 +478,19 @@ kubectl get all
     - `kubectl create -f nginx-deployment.yaml`
 
   - In k8s version 1.19+, we can specify the --replicas option to create a deployment with 4 replicas.
+    - `kubectl create deployment --image=nginx nginx --replicas=4`
+        
+      or export to YAML:
     - `kubectl create deployment --image=nginx nginx --replicas=4 --dry-run=client -o yaml > nginx-deployment.yaml`
 - Some additional sample commands useful in exam:
   - `kubectl edit deployment nginx`
   - `kubectl scale deployment nginx --replicas=5`
   - `kubectl set image deployment nginx nginx=nginx:1.18`
-  - For creating service:
-    - `kubectl expose pod redis --port=6379 --name redis-service --dry-run=client -o yaml`
+  - For creating **service** we have 2 ways. Each one of them has its own challenge. The first one can't have selector, the second one can't have node port. But overally `expose` is more recommended, then modify YAML file:
+    1. Using Expose:
+       - `kubectl expose pod redis --port=6379 --name redis-service --dry-run=client -o yaml` . Example for ClusterIP
+       - `kubectl expose pod nginx --type=NodePort --port=80 --name=nginx-service --dry-run=client -o yaml` . For NodePort
+     2. Using Service:
+        - `kubectl create service clusterip redis --tcp=6379:6379 --dry-run=client -o yaml` . Example for ClusterIP
+        - `kubectl create service nodeport nginx --tcp=80:80 --node-port=30080 --dry-run=client -o yaml` . Example for NodePort
 
