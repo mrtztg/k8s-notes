@@ -360,6 +360,9 @@ spec:
 - For creating service we can use both `create service` and `expose pod` command as below:
   - `kubectl expose pod nginx --type=NodePort --port=80 --name=nginx-service --dry-run=client -o yaml`
   - `kubectl create service nodeport nginx --tcp=80:80 --node-port=30080 --dry-run=client -o yaml`
+  - Actually, `expose` command detects labels of pod and uses them for service.
+- We can even combine Pod creation and exposing service with this:
+  - `kubectl run nginx --image=nginx --port=80 --expose=true`
 - Kubernetes creates a ClusterIP in the beginning for us (I still don't know the reason behind)
 
 ## Namespaces
@@ -493,4 +496,6 @@ kubectl get all
      2. Using Service:
         - `kubectl create service clusterip redis --tcp=6379:6379 --dry-run=client -o yaml` . Example for ClusterIP
         - `kubectl create service nodeport nginx --tcp=80:80 --node-port=30080 --dry-run=client -o yaml` . Example for NodePort
-
+- If you forgot the commands' exact form, just use `--help`. For example:
+  - `kubectl create service --help`
+  - `kubectl create service clusterip --help`
