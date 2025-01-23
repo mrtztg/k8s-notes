@@ -428,6 +428,34 @@ In the above comamnds, you as administrator is responsible to final result. For 
 **2. Declarative**: Means we define the desired infra, k8s will decide what approach it should follow to reach the desired infra. For example, before creating the Replica, it checks whether it exists of not. The following command is declerative:
 - `kubectl apply -f nginx.yaml` . It's intelligent and will check resource exists before running. It's like *Upsert* in SQL.
   - `kubectl apply -f /path/to/config-files` . To apply for all definition files in a path
+- When we use `apply` command, k8s compares the *Live object configuration* with the local file. Then, it updates the live object. But before updating, it creates a copy of *Live object configuration* and put in `annotation` section of the live object configuration. So we can always see what was the latest config before the current one:
+  ![Applied Last Command](assets/images/31_appy_last_applied.png)
+
+# Scheduler
+- Scheduler looks for all the Pods that doesn't have `nodeName` field to set `nodeName` for them. Normally, we don't define `nodeName` field in Pod definition file. But we do it Pod creation time by defining it in YAML file:
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  # ...
+  spec:
+    containers:
+    # ...
+    nodeName: node02 # This field
+  ```
+  - But if we want to assign a node an existing Pod, we should use POST call to Pod's binding API. The following *Pod bind definition* file.
+  ```yaml
+  apiVersion: v1
+  kind: binding
+  metadata:
+    name: nginx
+  target:
+    apiVersion: v1
+    kind: Node
+    name: node02
+  ```
+    But we we won't use this YAML file. We'll use the equivalent JSON in the POST:
+
+    `curl --header "Content-Type:application/json" --request POST --data '{"apiVersion":"v1", "kind": "Binding", ...} http://$SERVER/api/v1/namespaces/default/pods/$PODNAME/binding/`
 
 ## Additional Commands
 
