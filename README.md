@@ -95,15 +95,6 @@
 - To see running `controller-manager` processes, run the following command on master Node: `ps -aux | grep kube-controller-manager`
 - Navigate to sector **Controller Manager** below to to learn about each controllers
 
-### Kube Scheduler
-
-- It’s only responsible for deciding which pod goes to which Node. It won’t place pod. Placing pod is responsibility of `kubelet`
-- It decides the Node based on requirements and criteria like:
-  - Resource Requirements and Limits
-  - Taints and Tolerations
-  - Node Selector/Affinity
-- To we can see options similar to how we did in KubeControllerManager
-
 ### Kubelet
 
 - It’s the captain of worker Node. Responsible to Register Nodes in Kubernetes cluster.
@@ -432,7 +423,13 @@ In the above comamnds, you as administrator is responsible to final result. For 
   ![Applied Last Command](assets/images/31_appy_last_applied.png)
 
 # Scheduler
-- Scheduler looks for all the Pods that doesn't have `nodeName` field to set `nodeName` for them. Normally, we don't define `nodeName` field in Pod definition file. But we do it Pod creation time by defining it in YAML file:
+- The Scheduler is a key component in Kubernetes that automatically chooses which Node runs each Pod. It won’t place pod. Placing pod is responsibility of `kubelet`
+- It decides the Node based on requirements and criteria like:
+  - Resource Requirements and Limits
+  - Taints and Tolerations
+  - Node Selector/Affinity
+- There will be a default scheduler in `kube-system` namespace. If that doesn't work well, our new created Pods will be in `Pending` status because Scheduler is not there to place the Pod in the proper Node.
+- Manually setting `nodeName` overrides the Scheduler, forcing a Pod onto a specific Node (or failing if that Node is unsuitable):
   ```yaml
   apiVersion: v1
   kind: Pod
@@ -442,7 +439,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
     # ...
     nodeName: node02 # This field
   ```
-  - But if we want to assign a node an existing Pod, we should use POST call to Pod's binding API. The following *Pod bind definition* file.
+- Pod Node can be defined in creation time only. We can't move a running Pod. If we want to assign a node an existing Pod, we should use POST call to Pod's binding API. The following *Pod bind definition* file.
   ```yaml
   apiVersion: v1
   kind: binding
