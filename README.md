@@ -422,6 +422,23 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - When we use `apply` command, k8s compares the *Live object configuration* with the local file. Then, it updates the live object. But before updating, it creates a copy of *Live object configuration* and put in `annotation` section of the live object configuration. So we can always see what was the latest config before the current one:
   ![Applied Last Command](assets/images/31_appy_last_applied.png)
 
+## Labels & Selectors
+- Labels in k8s are like tags in AWS or in YouTube post. It's for assigning resources to different groups. So, we can use tags to select those resources together.
+- You can as many labels as you want for your resource.
+- Also, if we want a group of resource been used together by another resource (Like Pods been used by a ReplicaSet), we use labels.
+- For getting resources by labels, use like this `--selector app=Frontend` or `-l app=Frontend`
+- *Annotations* field is also been used for other informative data
+```yaml
+# ...
+metadata:
+  name: simple-app
+  labels: # ...
+  annotations:
+    buildversion: 1.22
+# ...
+```
+
+
 # Scheduler
 - The Scheduler is a key component in Kubernetes that automatically chooses which Node runs each Pod. It won’t place pod. Placing pod is responsibility of `kubelet`
 - It decides the Node based on requirements and criteria like:
