@@ -500,7 +500,23 @@ metadata:
   - `kubectl taint no node01 app:NoSchedule-`
 - On craetion of a Pod, if Pod doesn't have matching tolerant for any of the Nodes, it'll stay on the "Pending" state. But as soon as we modify a Node that become taint-less or taint with matching the Pod's tolerant, the scheduler will place Pod in that Node.
 
-## Additional Commands
+## Node Selectors
+- Using labels/selectors, we can define which Nodes our Pod can deployed in, using labels.
+- To do this, we add label to Node(s) using:
+  - `kubectl label nodes {node_name} {label-key}={label_value}` Like `kubectl label no node01 size=Large`
+  - Then set selector in Pod(s):
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  #...
+  spec:
+  #...
+    nodeSelector:
+      size: Large
+  ```
+- Node Selector is very limited. E.g we can define multiple filter, or we can't define NOT operator. For advanced usages, use Node Affinity
+
+# Additional Commands
 
 - Get all running components in groups: `kubectl get all`
 - To keep live watch on any get command in k8s, add --watch param. E.g `kubetctl get po --watch`
