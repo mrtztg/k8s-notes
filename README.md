@@ -426,7 +426,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - Labels in k8s are like tags in AWS or in YouTube post. It's for assigning resources to different groups. So, we can use tags to select those resources together.
 - You can as many labels as you want for your resource.
 - Also, if we want a group of resource been used together by another resource (Like Pods been used by a ReplicaSet), we use labels.
-- For getting resources by labels, use like this `--selector app=Frontend` or `-l app=Frontend`
+- For getting resources by labels, use like this `--selector app=Frontend` or `-l app=Frontend`. If we want to get resources that have multiple tags (all are must) use colon like `-l app=FE,env=dev`
 - *Annotations* field is also been used for other informative data
 ```yaml
 # ...
@@ -440,6 +440,7 @@ metadata:
 
 
 # Scheduler
+## Fundamentals
 - The Scheduler is a key component in Kubernetes that automatically chooses which Node runs each Pod. It won’t place pod. Placing pod is responsibility of `kubelet`
 - It decides the Node based on requirements and criteria like:
   - Resource Requirements and Limits
@@ -470,14 +471,41 @@ metadata:
     But we we won't use this YAML file. We'll use the equivalent JSON in the POST:
 
     `curl --header "Content-Type:application/json" --request POST --data '{"apiVersion":"v1", "kind": "Binding", ...} http://$SERVER/api/v1/namespaces/default/pods/$PODNAME/binding/`
+## Taint and Tolerants
+- Explanation Taint and Tolerans: Imaging there is a room with humans and bugs. The bugs approach people to land of them. They can land on anyone they want (randomly). But if a person sprays on him (we call it taint), the bugs will run away from him. As an expection, any of the bugs are tolerant to that spray, that bug can land on the person.
+  We can similar concept for k8s. If we add taint to Nodes, only the bugs that have equivalent tolerant can be sheduled on the Node.
+- The taint to Node will be in this format: `kubectl taint nodes {node_name} {key}={value}:{taint-effect}`
+  - `taint-effect` possible options:
+    - `NoSchedule` : Means new Pods shouln't be deployed (scheduled) without matching tolerant
+    - `PreferNoSchedule` : *Try* to not schedule new Pods without matching tolerant, but it's not guaranteed
+    - `NoExecute` : Applies both for new Pods and existing Pods. Means event if a tolerant of a Pod in the Node doesn't match the taint, it'll be killed. This eviction doesn't guarantee recreation of the Pod. If the Pod had Deployment or other controller, it will be recraeted by it. Otherwise, the Pod won't be recreated.
+  - Sample command: `kubectl taint nodes node1 app=blue:NoSchedule`
+- Taint & Tolerant is only for **Preventing** Pods from placing on certain Nodes, not **Forcing**. For Forcing, we'll use **Node Affinity**.
+- Then we should define the matching tolerants in the Pods we want to sit in that Node:
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  # ...
+  spec:
+    containers: #...
+    tolerations:
+    - key: "app" 
+      operator: "Equal"
+      value: "blue"
+      effect: "NoSchedule"
+- Master Node in k8s is also a Node, line Worker Nodes. Why scheduler doesn't schedule any Pods on Master Node? Because Master Node has a taint on it (try to not modify this taint):
+  ![Master Node's Taint](assets/images/32_mater_node_taint.png)
+- To remove taint from a Node, either use "key" or "key+effect" with "-" at the end:
+  - `kubectl taint no node01 app-`
+  - `kubectl taint no node01 app:NoSchedule-`
+- On craetion of a Pod, if Pod doesn't have matching tolerant for any of the Nodes, it'll stay on the "Pending" state. But as soon as we modify a Node that become taint-less or taint with matching the Pod's tolerant, the scheduler will place Pod in that Node.
 
 ## Additional Commands
 
-- Get all running components in groups
-
-```bash
-kubectl get all
-```
+- Get all running components in groups: `kubectl get all`
+- To keep live watch on any get command in k8s, add --watch param. E.g `kubetctl get po --watch`
+- If we want to get count of resources (Pod here)
+  `kubectl get po --no-headers | wc -l` .
 
 # References & Cheat Sheets
 
@@ -495,6 +523,7 @@ kubectl get all
 - `pv` : Persistent Volumes
 - `pvc` : PersistentVolumeClaims
 - `in` : Service Accounts
+- `no` : Nodes
 
 ### Arguments:
 - `-n=` : `--namespeces=`
