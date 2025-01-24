@@ -506,7 +506,6 @@ metadata:
   - `kubectl label nodes {node_name} {label-key}={label_value}` Like `kubectl label no node01 size=Large`
   - Then set selector in Pod(s):
   ```yaml
-  apiVersion: v1
   kind: Pod
   #...
   spec:
@@ -515,6 +514,32 @@ metadata:
       size: Large
   ```
 - Node Selector is very limited. E.g we can define multiple filter, or we can't define NOT operator. For advanced usages, use Node Affinity
+
+## Node Affinity
+- Using Node Affinity, we can specify complex Node Selectors to Pod. 
+- Possible values for Node Affinity Types are:
+  | Type | During Scheduling | During Execution |
+  | ---- | ----------------- | ---------------- |
+  | `requiredDuringSchedulingIgnoredDuringExecution` | Required | Ignored |
+  | `preferredDuringSchedulingIgnoredDuringExecution` | Preferred** | Ignored |
+  ** Preferred, means if scheduler couldn't find any Node that matches the selector of Pod, it'll ignore the selector and will deploy Pod in a Node randomly.
+- An example definiton file:
+  ```yaml
+  kind: Pod
+  # ...
+  spec:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            key: size
+            operators: In
+            values:
+            - Large
+              Medium
+  ```
+- Available options for operators are `In`, `NotIn`, `Exists`, `DoesNotExist`, `Gt` and `Lt`. Checkout [Docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#operators)
 
 # Additional Commands
 
