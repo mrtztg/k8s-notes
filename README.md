@@ -551,10 +551,77 @@ metadata:
   
   Checkout [Docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#operators)
 - scheduler is related to Pod, not Deployment or ReplicaSet. So if we want to define nodeAffinity, selector or taint tolerant for a deployment, we actually should define it in `spec > template > spec` section, not spec of Deployment itself.
-
+- 
 ## General
 - Think about the desired deployment as picuture below. We can to colored Pods to be places in their equivalent Node. But colorless Pods should be places in any of color-less Nodes. Solve this problem
   ![NodeAffinity vs TaintTolerant](assets/images/33_node_affinity_vs_taint_tolerant.png)
+
+## Resource Requirements
+- Scheduler decides which Node it should place the Pod in. It'll check the remaining resources of the Node. If if doesn't meet the required resources of the Pod, Scheduler will try to place on other Node. If there is not Node with sufficient resources, Scheduler will keep the Pod in Pending state.
+- You can define at least 1m (1 milli) required or limit CPU for a Pod, and minimum 1Mi required or limit Memory.
+- Limits and requests are in for each Pod, even if they're part of on deployment.
+- You can define both required and limits, or one of them, or neither. Usually (but not always) setting Requests without Limits is the ideal config, because we let the container to get as much as resource it needs, but we make sure all other containers also will get minimum required resources.
+- ![Limit Requests and Limites Behaviour](assets/images/34_cpu_limit_request_behaviour.png)
+- To define required resources and/or limits:
+  ```yaml
+  kind: Pod
+  # ...
+  spec:
+    resources:
+      requests:
+        memory: "100Ki" # Ki, Mi, Gi, K, M, G. or digit as byte (like 1024 )
+        cpu: "1m" # 1m = 0.001 CPU
+      limits:
+        memory: "8Gi"
+        cpu: 1        # = 1 AWS_vCPU or 1 GCP_Core or 1 Azure_Core=0 or 1 Hyperthread
+
+  ```
+- If a Pod tries to use more CPU than limits, k8s will prevent it from using. But if the Pod constantly tries to use more memory, k8s will kill the Pod and produce OOM (Out Of Memory) error, not prevent.
+- By default, containers doesn't have limits and required resources. But if we want to default resource values for new Pods (not the existing ones) we can define it in **Namespace level**:
+  ```yaml
+  apiVersion: v1
+  kind: LimitRange
+  metadata:
+    name: cpu-range-constraint
+  spec:
+    limits:
+      default: # Limit
+        cpu: 500m
+      defaultRequest: # Request
+        cpu: 500m
+      max: # Limit
+        cpu: 1
+      min: # Request
+        cpu: 100m
+      type: Container
+  ```
+  
+  or
+  ```yaml
+  # ...
+    limits:
+      default:
+        memory: 1Gi
+      defaultRequest:
+        memory: 1Gi
+      max:
+        memory: 1Gi
+      min:
+        memory: 500Mi
+      type: Container
+  ```
+- We can also set limits on total amount of resources used by all Pods in **Namespace** using ResourceQuotas:
+  ```yaml
+  apiVersion: v1
+  kind: ResourceQuota
+  metadata:
+    name: my-resource-quota
+  spec:
+    hard:
+      requests.cpu: 4
+      requests.memory: 4Gi
+      limits.cpu: 10
+      limits.memory: 10Gi
 
 # Additional Commands
 
