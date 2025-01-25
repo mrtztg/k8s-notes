@@ -514,14 +514,16 @@ metadata:
       size: Large
   ```
 - Node Selector is very limited. E.g we can define multiple filter, or we can't define NOT operator. For advanced usages, use Node Affinity
+- To see Node labels, other than `describe` comamnd, we can use `k get nodes --show-labels`
 
 ## Node Affinity
 - Using Node Affinity, we can specify complex Node Selectors to Pod. 
 - Possible values for Node Affinity Types are:
-  | Type | During Scheduling | During Execution |
-  | ---- | ----------------- | ---------------- |
-  | `requiredDuringSchedulingIgnoredDuringExecution` | Required | Ignored |
-  | `preferredDuringSchedulingIgnoredDuringExecution` | Preferred** | Ignored |
+  | Type | During Scheduling | During Execution | Notes |
+  | ---- | ----------------- | ---------------- | ----- |
+  | `requiredDuringSchedulingIgnoredDuringExecution` | Required | Ignored | - |
+  | `preferredDuringSchedulingIgnoredDuringExecution` | Preferred** | Ignored | - |
+  | `preferredDuringSchedulingRequiredDuringExecution` | Required | Required | Planned, not available yet |
   ** Preferred, means if scheduler couldn't find any Node that matches the selector of Pod, it'll ignore the selector and will deploy Pod in a Node randomly.
 - An example definiton file:
   ```yaml
@@ -533,13 +535,26 @@ metadata:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
-            key: size
-            operators: In
-            values:
-            - Large
-              Medium
+            - key: size
+              operators: In
+              values:
+              - Large
+              - Medium
   ```
-- Available options for operators are `In`, `NotIn`, `Exists`, `DoesNotExist`, `Gt` and `Lt`. Checkout [Docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#operators)
+- Available options for operators are 
+- `In`
+- `NotIn`
+- `Exists` (without *values* field)
+- `DoesNotExist` (without *values* field)
+- `Gt`
+- `Lt`
+  
+  Checkout [Docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#operators)
+- scheduler is related to Pod, not Deployment or ReplicaSet. So if we want to define nodeAffinity, selector or taint tolerant for a deployment, we actually should define it in `spec > template > spec` section, not spec of Deployment itself.
+
+## General
+- Think about the desired deployment as picuture below. We can to colored Pods to be places in their equivalent Node. But colorless Pods should be places in any of color-less Nodes. Solve this problem
+  ![NodeAffinity vs TaintTolerant](assets/images/33_node_affinity_vs_taint_tolerant.png)
 
 # Additional Commands
 
