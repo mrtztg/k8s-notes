@@ -524,6 +524,7 @@ metadata:
   | `requiredDuringSchedulingIgnoredDuringExecution` | Required | Ignored | - |
   | `preferredDuringSchedulingIgnoredDuringExecution` | Preferred** | Ignored | - |
   | `preferredDuringSchedulingRequiredDuringExecution` | Required | Required | Planned, not available yet |
+  
   ** Preferred, means if scheduler couldn't find any Node that matches the selector of Pod, it'll ignore the selector and will deploy Pod in a Node randomly.
 - An example definiton file:
   ```yaml
