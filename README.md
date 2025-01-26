@@ -702,6 +702,7 @@ metadata:
   - Custom Logic. E.g some workload need more specialized constraints (like specific CPU set, large memory usage, GPU resources, time-sensitive batch processing). 
   - Advanced scheduling policies
   - Isolation and Reliability.
+  - And so on
 - For deploying Kube-scheduler in old fashio way, config file for scheduler would be like `my-scheduler-config.yaml` file below. And for deploying the Scheduler, after downloading the KubeScheduler binary, edit service to be like this:
   ![Deploy Additional Scheduler](assets/images/39_deploy_additional_scheduler.png)
 - Today, 99% of the time we do deploy scheduler as Pod, like all other kubeadm's controlplane controllers. The Pod definition will be like this:
@@ -752,7 +753,32 @@ metadata:
 - If we want to see which scheduler the Pod is using, run `kubectl get events -o wide` and see *SOURCE* column:
   ![Get Events](assets/images/40_getevents.png)
 - We can also see scheduler logs if we face any issues in Scheduler, using `kubectl logs my-custom-scheduler -n=kube-system`
-  
+- Since k8s 1.18, we can have define several scheduler profiles in one definition file like this:
+  ```yaml
+  apiVersion: kubescheduler.config.k8s.io/v1
+  kind: Pod
+  profiles:
+   - schedulerName: my-scheduler
+   - schedulerName: my-scheduler-2
+   - schedulerName: my-scheduler-3
+  ```
+  - Using this way, we maintain several scheduler from one file, also it prevents race condition in scheduler creation.
+
+## Sheduler Profiles
+- The following diagram shows the scheduler framework.
+  - Scheduling Queue: Scheduler sort the Pods in queue (the Pods that are waiting to be created) to know which one should be processes 1st, which be 2nd so on.
+  - Filtering: Scheduler filters out the Nodes that the Pods can't be deployed on (like if the Node doesn't have sufficient resources). Eg:
+    - Plugin *NodeResourcesFit*: Filters out the Nodes that doesn't have sufficient resources
+    - Plugin *NodeName*: Filters out Nodes that doesn't meet the *NodeName* field in Pod definition
+    - Plugin *NodeUnchedulable*: Filters out the Nodes that has *Unchedulable* property set to *true*
+  - Scoring: From the remanining Nodes, scheduler decides which Node it should deploy the Pod to.
+    - Plugin *NodeResourcesFit*: This plugin also have job in Scoring step.
+    - Plugin *ImageLocality*: Score the Nodes in higher priority if they already have the required image of the Pod container.
+  - Binding: Finaly bounds the Pod to the Node.
+  ![Scheduler Plugins and Extensions](assets/images/41_scheduler_plugins_extensions.png)
+- Kubernetes does all the scheduling process using Plugins and Extensions. k8s is highly customisable. We can modify these scheduler plugins and extensions and where and how they should be placed.
+- For configure plugins in schedulers:
+  ![Scheduler Plugins config](assets/images/42_scheduler_plugins_config.png)
 
 # Additional Commands
 
