@@ -701,7 +701,6 @@ You can get this list using `kubectl api-resources`
 - `netpol` : NetworkPolicy
 - `sc` : StorageClass
 - `va` : VolumeAttachment
-- 
 
 ### Arguments:
 - `-n=` : `--namespeces=`
