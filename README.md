@@ -658,6 +658,31 @@ metadata:
 - Run `k create -f my-daemon-set.yaml` to create and use `k get daemonset` to list.
 ![Daemon Sets](assets/images/35_daemonsets.png)
 
+## Static Pods
+
+- Kubelet can create/delete Pods independently, without having Kubernetes Cluster to report to. Means it can create Pods even if Master Node and its controllers like api-server, scheduler, etcd, controller-manager don't exists. How? Using pod definitions in "static pod" directory.
+- Note that for running static Pods, Docker should be also installed on system, then kubelet can use it to create Pods.
+- Add or remove Pod definitions to this directory, and Kubelet will take care of adding or removing these static Pods. Kubelet will even make sure the Pod is healthy, and will restart if app inside it crashes. If you modify the Pod definition, Kubelete will replace it.
+- You can create Pods this way, not deployment, replicaset or services
+- To define this staticPods directory, we'll jump in `kubelet.service` file of the Node, and set path in `--pod-manifest-path`. Or create a separated config file with `staticPodPath` inside and pass its path inside `--config` of `kubelet.service`.
+
+![Kubelet Pod Manifest](assets/images/36_kubelet_pod_manifest.png)
+
+![Kubelet Pod path](assets/images/37_kubelet_config_file.png)
+
+- If we don't have k8s cluster yet (just have Kubelet), we can use `docker ps` if you're running Pods on Docker. Or `crictl ps` or `nerdctl ps` if your containerisation is others like containerd
+- Actually *Kubelet* can create Pods using Static Pods config, and `api-server` of Master Node at the same time. But the static Pods are Read-Only from *kube-apiserver*. We can see them using `k get pods`, but we can't modify or delete them using `kubectl`.
+- One usecase of Static Pod? Actually Kubeadm installs components of MasterNode (like apiserver, etcd, controller-manager) in this way. So, if any of these services crash, Kubelet will re-create them
+
+![Static Pod use case](assets/images/38_static_pod_usecase.png)
+
+- Difference between Static Pod and DaemonSet:
+  | Static PODs | DaemonSets |
+  | ----------- | ---------- |
+  | Created by the Kubelet | Created by Kube-API server (DaemonSet Controller) to make sure we have exactly 1 replica per Node |
+  | Deploy Control Plane components as Static Pods | Deploy Monitoring Agents, Logging Agents on Nodes |
+  | Ignored by the Kube-Scheduler |
+
 # Additional Commands
 
 - Get all running components in groups: `kubectl get all`
