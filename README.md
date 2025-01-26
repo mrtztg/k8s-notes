@@ -449,7 +449,19 @@ metadata:
     2. Before deleting the Pod, export the definition using `k get po {PodName} -o yaml > {OutputDefFile}`. Then delete the Pod and create new one using the newly created def file.
   - But if we edit the Deployment that has Pods inside, the Deployment will delete Pods and create new ones using the edited definition.
   - Note: Instead of delete and recreate, we can use `replace --force` command
-
+- To run commands on Pod (sleep in this example):
+  ```yaml
+  # ...
+  spec:
+    containers:
+      - image: nginx 
+        name: nginx
+        command:
+          - sleep
+          - "1000"
+  ```
+  or you can generate YAML file using dry-run `k run my-nginx --image=nginx --dry-run=client -o yaml --command -- sleep 1000`. Note that --command should be at the end.
+- To see what's the owner of the Pod (like ReplicaSet, Deployment, etc), get yaml of Pod using `kubectl get pod {PodName} -n {Namespace} -o yaml` and look for `ownerReferences -> kind`.
 
 # Scheduler
 ## Fundamentals
@@ -664,14 +676,15 @@ metadata:
 - Note that for running static Pods, Docker should be also installed on system, then kubelet can use it to create Pods.
 - Add or remove Pod definitions to this directory, and Kubelet will take care of adding or removing these static Pods. Kubelet will even make sure the Pod is healthy, and will restart if app inside it crashes. If you modify the Pod definition, Kubelete will replace it.
 - You can create Pods this way, not deployment, replicaset or services
-- To define this staticPods directory, we'll jump in `kubelet.service` file of the Node, and set path in `--pod-manifest-path`. Or create a separated config file with `staticPodPath` inside and pass its path inside `--config` of `kubelet.service`.
+- To define this staticPods directory, we'll jump in `kubelet.service` (using `ps -aux | grep kubelet`) file of the Node, and set path in `--pod-manifest-path`. Or create a separated config file with `staticPodPath` inside and pass its path inside `--config` of `kubelet.service`.
 
 ![Kubelet Pod Manifest](assets/images/36_kubelet_pod_manifest.png)
 
 ![Kubelet Pod path](assets/images/37_kubelet_config_file.png)
 
 - If we don't have k8s cluster yet (just have Kubelet), we can use `docker ps` if you're running Pods on Docker. Or `crictl ps` or `nerdctl ps` if your containerisation is others like containerd
-- Actually *Kubelet* can create Pods using Static Pods config, and `api-server` of Master Node at the same time. But the static Pods are Read-Only from *kube-apiserver*. We can see them using `k get pods`, but we can't modify or delete them using `kubectl`.
+- Actually *Kubelet* can create Pods using Static Pods config, and `api-server` of Master Node at the same time. But the static Pods are Read-Only from *kube-apiserver*. We can see them using `k get pods`, but we can't modify or delete them using `kubectl`. If we delete it, Kubelet will create another one.
+- In `kubectl get pods -A -o wide`, the static Pods are most likely the ones that have `-{nodeName}` suffix. Like `-controlplane`, if it's placed in *controlplane* Node. But to make 100% sure the Pod is static, get yaml of Pod using `kubectl get pod {PodName} -n {Namespace} -o yaml` and look for `ownerReferences -> kind`. If the value is `Node`, it's StaticPod, if is anything else (like `ReplicaSet`), it's not then.
 - One usecase of Static Pod? Actually Kubeadm installs components of MasterNode (like apiserver, etcd, controller-manager) in this way. So, if any of these services crash, Kubelet will re-create them
 
 ![Static Pod use case](assets/images/38_static_pod_usecase.png)
@@ -682,6 +695,64 @@ metadata:
   | Created by the Kubelet | Created by Kube-API server (DaemonSet Controller) to make sure we have exactly 1 replica per Node |
   | Deploy Control Plane components as Static Pods | Deploy Monitoring Agents, Logging Agents on Nodes |
   | Ignored by the Kube-Scheduler |
+- If the static pod is in another Node (not in your current connected Node), you should ssh to it first like using `ssh {nodeIP}` or `kubeclt ssh node {nodeName}`. Then look for kubelet config file.
+
+## Multiple Schedulers
+- In k8s, we can have custom schedulers. Default scheduler (`kube-scheduler`) works perfect for vast majority of workloads. However, there are times we may want to introduce additional scheduling logic or use different strategies for different workloads. In such scenarios, we can deploy multiple schedulers. Some reasons to use multiple schedulers:
+  - Custom Logic. E.g some workload need more specialized constraints (like specific CPU set, large memory usage, GPU resources, time-sensitive batch processing). 
+  - Advanced scheduling policies
+  - Isolation and Reliability.
+- For deploying Kube-scheduler in old fashio way, config file for scheduler would be like `my-scheduler-config.yaml` file below. And for deploying the Scheduler, after downloading the KubeScheduler binary, edit service to be like this:
+  ![Deploy Additional Scheduler](assets/images/39_deploy_additional_scheduler.png)
+- Today, 99% of the time we do deploy scheduler as Pod, like all other kubeadm's controlplane controllers. The Pod definition will be like this:
+  ```yaml
+  # Pod definition file
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: my-custom-scheduler
+    namespace: kube-system
+  spec:
+    containers:
+      - command:
+        - kube-scheduler
+        - --address=127.0.0.1
+        - --kubeconfig=/etc/kubernetes/scheduler.conf
+        - --config=/etc/kubernetes/my-scheduler-config.yaml # Path of config file
+
+        image: k8s.gcr.io/kube-scheduler-amd64:v1.11.3
+        name: kube-scheduler
+
+  # Config file: my-scheduler-config.yaml
+  apiVersion: kubescheduler.config.k8s.io/v1
+  kind: Pod
+  profiles:
+   - schedulerName: my-scheduler
+  # We enable leaderElection when we have multiple MasterNode for High Availability purpose. But because only one copy of the scheduler can be run at a time. Using leaderElection we can set which node takes the lead. 
+  leaderElection:
+    leaderElect: true
+    resourceNamespace: kube-system
+    resourceName: lock-object-my-scheduler
+  ```
+- See [Configure Multiple Schedulers](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/) to understand the full steps of schedulers as *Pod Deployment*.
+  - Don't forget to take a look at [deployment YAML file](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/#define-a-kubernetes-deployment-for-the-scheduler) as well
+- After creating the scheduler as a Pod, you can see it in Pods list.
+- By default, Pods use default scheduler. But if we created custom Schedulers, we can ask Pod to use that custom scheduler with the following field:
+  ```yaml
+  kind: Pod
+  # ...
+  spec:
+    containers:
+      - name: nginx
+        image: nginx
+    schedulerName: my-custom-scheduler
+  ```
+
+  Note that the Pod will remain if *Pending* state if scheduler was not configured correctly.
+- If we want to see which scheduler the Pod is using, run `kubectl get events -o wide` and see *SOURCE* column:
+  ![Get Events](assets/images/40_getevents.png)
+- We can also see scheduler logs if we face any issues in Scheduler, using `kubectl logs my-custom-scheduler -n=kube-system`
+  
 
 # Additional Commands
 
@@ -730,7 +801,7 @@ You can get this list using `kubectl api-resources`
 
 
 # Exam Tips
-
+- Always verify your performed change during the exam. Like check your created Pod is READY. 
 - k8s in exam has been installed using `kubeadm`  which
   - already deployed etcd, Kube-Apiserver, Kube-Scheduler, Kube-Controller-Manager as Pods
 - Createing YAML files are time consuming during the exam. Instead try to use imperative commands as much as possible. If complex changes required (like multiple containers, env variables, so on) try to use dry-run to save time by creating template YAML.
