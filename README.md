@@ -438,6 +438,18 @@ metadata:
 # ...
 ```
 
+## Pod Extra Notes
+- We can edit only the following specifications of a Pod:
+  - `spec.containers[*].image`
+  - `spec.initContainers[*].image`
+  - `spec.activeDeadlineSeconds`
+  - `spec.tolerattions`
+  - If we try to edit other specs, k8s will give a "Forbidden" error and will save our changes in a temp YAML file. So, for editing those forbidden specs, we have 2 ways:
+    1.  After k8s saved our edits in a temp file, we'll delete the Pod and create new one using that temp file
+    2. Before deleting the Pod, export the definition using `k get po {PodName} -o yaml > {OutputDefFile}`. Then delete the Pod and create new one using the newly created def file.
+  - But if we edit the Deployment that has Pods inside, the Deployment will delete Pods and create new ones using the edited definition.
+  - Note: Instead of delete and recreate, we can use `replace --force` command
+
 
 # Scheduler
 ## Fundamentals
@@ -568,16 +580,21 @@ metadata:
   kind: Pod
   # ...
   spec:
-    resources:
-      requests:
-        memory: "100Ki" # Ki, Mi, Gi, K, M, G. or digit as byte (like 1024 )
-        cpu: "1m" # 1m = 0.001 CPU
-      limits:
-        memory: "8Gi"
-        cpu: 1        # = 1 AWS_vCPU or 1 GCP_Core or 1 Azure_Core=0 or 1 Hyperthread
+    containers:
+      - name: my-simple-app
+        image: my-simple-app
+        resources:
+          requests:
+            memory: "100Ki" # Ki, Mi, Gi, K, M, G. or digit as byte (like 1024 )
+            cpu: "1m" # 1m = 0.001 CPU
+          limits:
+            memory: "8Gi"
+            cpu: 1        # = 1 AWS_vCPU or 1 GCP_Core or 1 Azure_Core=0 or 1 Hyperthread
 
   ```
-- If a Pod tries to use more CPU than limits, k8s will prevent it from using. But if the Pod constantly tries to use more memory, k8s will kill the Pod and produce OOM (Out Of Memory) error, not prevent.
+- If a Pod tries to:
+  - use more CPU than limits, k8s will prevent it from using
+  - use more memory, k8s will kill the Pod and produce OOM (Out Of Memory) error, not prevent. We'll see 'OOMKilled' error in Pod describe, in Last State > Reason.
 - By default, containers doesn't have limits and required resources. But if we want to default resource values for new Pods (not the existing ones) we can define it in **Namespace level**:
   ```yaml
   apiVersion: v1
@@ -588,29 +605,21 @@ metadata:
     limits:
       default: # Limit
         cpu: 500m
+        memory: 1Gi
       defaultRequest: # Request
-        cpu: 500m
-      max: # Limit
         cpu: 1
+        memory: 2Gi
+      max: # Limit
+        cpu: 4
+        memory: 8Gi
       min: # Request
         cpu: 100m
+        memory: 100Mi
       type: Container
   ```
-  
-  or
-  ```yaml
-  # ...
-    limits:
-      default:
-        memory: 1Gi
-      defaultRequest:
-        memory: 1Gi
-      max:
-        memory: 1Gi
-      min:
-        memory: 500Mi
-      type: Container
-  ```
+
+  - You can define one or both of CPU and memory. 
+  - To delete the default, first get list of limitRanges using `k get limitranges`, then delete the desired one using `k delete limitrange {LimitRangeNamE}`
 - We can also set limits on total amount of resources used by all Pods in **Namespace** using ResourceQuotas:
   ```yaml
   apiVersion: v1
@@ -623,6 +632,31 @@ metadata:
       requests.memory: 4Gi
       limits.cpu: 10
       limits.memory: 10Gi
+
+# Daemon Sets
+- Daemon sets is very similar to ReplicaSet, but it makes sure at exactly one replica of the Pod is deployed in all Nodes in the Cluster. Even if a Node been added after DaemonSet creation. Some usages of DaemonSet is monitoring or logging tools that we want to have in all Nodes. Even kube-proxy uses the same concept.
+- How k8s does DaemonSet behind the scenes? Using labels and NodeAffinity.
+- To create DaemonSet, create very similar definition to ReplicaSet:
+  ```yaml
+  apiVersion: apps/v1
+  kind: DaemonSet
+  metadata:
+    name: monitoring-daemon
+  spec:
+    selector:
+      matchLabels:
+        app: monitoring-agent
+    template:
+      metadata:
+        labels:
+          app: monitoring-agent
+      spec:
+        containers:
+          - name: monitoring-agent
+            image: monitoring-agent
+  ```
+- Run `k create -f my-daemon-set.yaml` to create and use `k get daemonset` to list.
+![Daemon Sets](assets/images/35_daemonsets.png)
 
 # Additional Commands
 
@@ -637,7 +671,9 @@ metadata:
 - [kubectl useful commands](https://faun.pub/kubectl-useful-commands-f5f47c0773f)
 - [Kubernetes Awesome](https://awesome-architecture.com/devops/kubernetes/kubernetes/)
 
-# Kubernetes Shortcuts
+# Kubernetes Resources aliases
+You can get this list using `kubectl api-resources`
+
 - `po` : Pods
 - `rs` : ReplicaSets
 - `deploy` : Deployments
@@ -648,6 +684,21 @@ metadata:
 - `pvc` : PersistentVolumeClaims
 - `in` : Service Accounts
 - `no` : Nodes
+- `rc` : ReplicationController
+- `sec` : Secret
+- `cm` : ConfigMap
+- `ep` : Endpoint
+- `limits` : LimitRange
+- `quota` : ResourceQuota
+- `sa` : ServiceAccount
+- `sts` : StatefulSet
+- `ds` : DaemonSet
+- `cj` : CronJob
+- `ing` : Ingress
+- `netpol` : NetworkPolicy
+- `sc` : StorageClass
+- `va` : VolumeAttachment
+- 
 
 ### Arguments:
 - `-n=` : `--namespeces=`
