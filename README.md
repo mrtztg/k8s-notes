@@ -780,6 +780,20 @@ metadata:
 - For configure plugins in schedulers:
   ![Scheduler Plugins config](assets/images/42_scheduler_plugins_config.png)
 
+# Logging and Monitoring
+## Monitoring
+- There are various monitoring tools for k8s that we can install, depends on what we like to monitor (like CPU, memory, whether Node level, or Pod level, how many are healthy, so on). Some examples are METRICS SERVER, Premetheus, ElasticStack, DataDog, dynatrace.
+- Let's take METRICS SERVER as our monitoring tool.
+  - You can have 1 METRIC SERVER per k8s cluster
+  - It stores metrics in memory, not disk. If we want to store in disk, we should use more advanced tools
+  - Kubelet will have *cAdvisor* inside it which is responsible to receive metrics from Pods and send to METRICS SERVER
+  - To install METRICS SERVER:
+    - For *minikube* run `minikube addons enable metrics-server`
+    - For all others, run `kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml`
+  - After installation:
+    - Use `kubectl top node` to see metrics of nodes
+    - Use `kubectl top pod` to see metrics of pods
+
 # Additional Commands
 
 - Get all running components in groups: `kubectl get all`
