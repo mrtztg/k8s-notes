@@ -790,9 +790,15 @@ metadata:
   - To install METRICS SERVER:
     - For *minikube* run `minikube addons enable metrics-server`
     - For all others, run `kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml`
+    - After installation, the APIs may take some time to get ready.
   - After installation:
     - Use `kubectl top node` to see metrics of nodes
     - Use `kubectl top pod` to see metrics of pods
+
+## Logging
+- Very similar to how we log containers in Docker, for see logs in k8s Pod, we run the following command:
+  - `kubectl logs -f {podName}` if the Pod has only one container
+  - `kubectl logs -f {podName} {containerName}` . We *should* specify container name as well if we have more than 1 container in Pod
 
 # Additional Commands
 
