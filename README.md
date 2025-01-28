@@ -800,6 +800,26 @@ metadata:
   - `kubectl logs -f {podName}` if the Pod has only one container
   - `kubectl logs -f {podName} {containerName}` . We *should* specify container name as well if we have more than 1 container in Pod
 
+# Application Lifecycle Management
+## Rolling Updates and Rollbacks
+- When we create a deployment, in does rollout. Each rollout, creates a Revision (E.g Revision 1, Revision 2, so on).
+- To see status of rollout of a deploy use `kubectl rollout staus deploy {deploymentName}`
+- To see history of rollouts of a deploy, use `kubectl rollout history deploy {deployName}`
+- There are different Deployment strategies.
+  1. Recreate strrategy: All Pods gets deleted at once, and their new version gets deployed together. (k8s does this by running replicas=0 and then replicas={actualReplicsNumber}).
+       - The problem with this strategy is that our application will be down between old Pods deletion and new Pods readiness time. This strategy is not the default strategy.
+  2. Rolling Update: The Pods get updated to the new version 1 by 1. This strategy makes sure not all the application is down during the update. (k8s does this by creating new replicaSet inside itself, then reduces number or replicas of old replicaSet one by one, and simultaneously increase replicas of new ReplicaSet one by one).
+       - This strategy is default deployment strategy
+
+![Rollout Strategies](assets/images/43_rollout_strategies.png)
+
+![Rollout Behind the Scenes](assets/images/44_rollout_behind_scenes.png)
+
+![Deployment ReplicaSets](assets/images/45_deployment_replicaSets.png)
+
+- If we only want to change the image of Pods in the Deplooyment, run `k set image deploy/{deploymentName} {containerName}={desireImageName:tag}` like `k set image deploy/my-app nginx-controller=nginx:1.9.0`
+- If we want to rollback new version of our application, run `kubectl rollout undo deployment/{deploymentName}`
+
 # Additional Commands
 
 - Get all running components in groups: `kubectl get all`
