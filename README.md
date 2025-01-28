@@ -820,6 +820,28 @@ metadata:
 - If we only want to change the image of Pods in the Deplooyment, run `k set image deploy/{deploymentName} {containerName}={desireImageName:tag}` like `k set image deploy/my-app nginx-controller=nginx:1.9.0`
 - If we want to rollback new version of our application, run `kubectl rollout undo deployment/{deploymentName}`
 
+- To update Rollout strategy of a deployment, either use *edit* command or modify YAML def:
+  ```yaml
+  kind: Deployment
+  # ...
+  spec:
+    strategy: 
+      type: Recreate
+  ```
+
+  or
+
+  ```yaml
+  kind: Deployment
+  #...
+  spec:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 3
+        maxUnavailable: 1
+  ```
+
 # Additional Commands
 
 - Get all running components in groups: `kubectl get all`
@@ -906,3 +928,4 @@ You can get this list using `kubectl api-resources`
 - If you forgot the commands' exact form, just use `--help`. For example:
   - `kubectl create service --help`
   - `kubectl create service clusterip --help`
+  - `kubectl set image --help`
