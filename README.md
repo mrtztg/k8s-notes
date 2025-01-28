@@ -842,6 +842,30 @@ metadata:
         maxUnavailable: 1
   ```
 
+## Commands
+*Note: The CKA exam won't have question from commands*
+### Some notes from Docker 
+- Containers are not like VMs. They stop running when their job gets done.
+- Linux images file ends with `CMD ["bash"]`. And because of it, if just run a Linux image (like Ubuntu) it will get stop immediately. But for images like nginx, it's long lasting command like ` DM["nginx"]`
+- Usages of CMD and ENTRYPOINT:
+  - `ENTRYPOINT ["sleep"]` + `docker run myimage 5` => `sleep 5`
+  - `CMD ["sleep"]` + `docker run myimage sleep` => `sleep 5`
+  - ```Dockerfile
+    ENTRYPOINT[ "sleep"]
+    CMD ["10"]
+    ```
+
+    In this scenario, we can either run without parameter like `docker run myimage` which will run `sleep 10` command. Or we can add the parameter that we want to override CMD, like `docker run myimage 12` which will run `sleep 12`.
+    In this config, even we really want to replace ENTRYPOINT, should use like this `docker run --enrty-point sleep2 myimage 10`
+- Parametes of both ENTRYPOINT and CMD should be in one of the following formats:
+  - `CMD command param1` like `CMD sleep 5`
+  - `CMD ["command", "param1"]` like `CMD ["sleep", "5"]`
+### Back to k8s
+- In k8s Pod definition file, for overriding `ENTRYPOINT` of container we fill `command` field, for overriding `CMD`, we fill `args`:
+![Command Arguments](assets/images/46_command_arguments.png)
+
+
+
 # Additional Commands
 
 - Get all running components in groups: `kubectl get all`
