@@ -855,15 +855,23 @@ metadata:
     CMD ["10"]
     ```
 
-    In this scenario, we can either run without parameter like `docker run myimage` which will run `sleep 10` command. Or we can add the parameter that we want to override CMD, like `docker run myimage 12` which will run `sleep 12`.
-    In this config, even we really want to replace ENTRYPOINT, should use like this `docker run --enrty-point sleep2 myimage 10`
+    - In this scenario, we can either run without parameter like `docker run myimage` which will run `sleep 10` command. Or we can add the parameter that we want to override CMD, like `docker run myimage 12` which will run `sleep 12`.
+    - In this config, even we really want to replace ENTRYPOINT, should use like this `docker run --enrty-point sleep2 myimage 10`
+    - If we force replacing ENTRYPOINT, CMD values will be removed. For example `docker run --entry-point sleep2`, the executed command will be `sleep2` instead of `sleep2 10`
 - Parametes of both ENTRYPOINT and CMD should be in one of the following formats:
   - `CMD command param1` like `CMD sleep 5`
   - `CMD ["command", "param1"]` like `CMD ["sleep", "5"]`
 ### Back to k8s
 - In k8s Pod definition file, for overriding `ENTRYPOINT` of container we fill `command` field, for overriding `CMD`, we fill `args`:
 ![Command Arguments](assets/images/46_command_arguments.png)
-
+  - Values array of both `command` and `args` can be in the one of the following formats:
+  ```yaml
+  command: ["sleep", "1000"]
+  ---
+  command:
+    - "sleep"
+    - "1000"
+  ```
 
 
 # Additional Commands
