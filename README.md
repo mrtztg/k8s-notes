@@ -460,7 +460,7 @@ metadata:
           - sleep
           - "1000"
   ```
-  or you can generate YAML file using dry-run `k run my-nginx --image=nginx --dry-run=client -o yaml --command -- sleep 1000`. Note that --command should be at the end.
+  or you can generate YAML file using dry-run `k run my-nginx --image=nginx --dry-run=client -o yaml --command -- sleep 1000`. Note that `--` part should be at the end.
 - To see what's the owner of the Pod (like ReplicaSet, Deployment, etc), get yaml of Pod using `kubectl get pod {PodName} -n {Namespace} -o yaml` and look for `ownerReferences -> kind`.
 
 # Scheduler
@@ -872,7 +872,129 @@ metadata:
     - "sleep"
     - "1000"
   ```
+- We can even pass command and args in commanline like this:
+  - `kubectl run {podName} ... -- <arg1> <arg2> ...` if we want to pass `args` only.
+    - E.g: `kubectl run myApp --image=my-app-image -- --color blue` 
+  - `kubectl run {podName} ... command -- <cmd> <arg1> <arg2> ...` if we want to pass `command` and `args`
+    - `kubectl run myApp --image=my-app-image command -- python.py myapp --color blue`
 
+## Environment Variables
+- For define environment varibles directly inside the Pod definition:
+    ```yaml
+    #...
+    containers:
+      - #...
+        env:
+          - name: APP_COLOR
+            value: blue
+    ```
+- But there are other ways to define environment variables as well. ConfigMaps and Secrets.
+
+## Config Maps
+- We can seperate Pod definition from env variables using ConfigMaps.
+- To create config map in imperative way:
+  - `kubectl create configmap <config-name> --from-literal=key=value. E.g:
+    - ```bash
+      kubectl create configmap \
+          appconfig --from-literal=APP_COLOR=blue \
+                    --from-literal=APP_MODE=prod
+      ```
+  - `kubectl create configmap <config-name> --from-file=<path-to-file>` . e.g:
+- To create in declerative way:
+    ```yaml
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: app-config
+    data:
+      APP_COLOR: blue
+      APP_MODE: prod
+    ```
+    Then run `k craete -f my-config-map.yaml`
+- `kubectl get cm` and `k describe cm` also also available
+- To inject the whole configMap(s):
+    ```yaml
+    # ...
+    containers:
+      - #...
+        envFrom:
+          - configMapRef:
+            name: app-config
+          - configMapRef:
+            name: db-config
+    ```
+- To inject single env from configMap:
+  ```yaml
+      # ...
+      containers:
+        - #...
+          env:
+            - name: APP_COLOR
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: APP_COLOR
+  ```
+- To inject the whole data as a file in volume:
+    ```yaml
+    volumes:
+      - name: app-config-volume
+        configMap:
+          name: app-config
+    ```
+
+## Secrets
+- Secrets are a proper k8s object to store credentials. But keep in mind that their values in Pod definition and even in ETCD are not encrypted. Also, people who have access to the namespace, can see its values. If you want to secure your secrets, maybe better to use secret management solutions in providers like AWS, GCP, or solutions like Harshicorp Vault, Helm Secrets so on.
+- Secrets and their commands are very similar to configMaps, with tiny differences like base64 encoded values and can create pods using those secrets.
+- The ways to add secrets:
+  - The Imperative ways:
+    - `kubectl create secret generic <secret-name> --from-literal=<key1>=<value1> --from-literal=<key2>...`
+    - `kubectl create secret generic --from-file=<path-to-file>`
+  - The Declarative way (to create with `kubectl -f create <def-file>`):
+    ```yaml
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: db-secret
+    data:
+      DB_HOST: bXlzcWw= # This is base64 encoded version of 'mysql'
+      DB_USER: cm9vdA== # This is base64 encoded version of 'root'
+      DB_PASSWORD: cGFzc3dk
+    ```
+    - Note that the values should be `base64` encoded.
+    - To `base64` encode, run `echo -n "{myvalue}" | base64` in command line, and to decode run `echo -n "{myvalue}" | base64 --decode`.
+- Secret values will be hidden in `k describe secrets`. If you want to see values, use `k get secret <secret-name> -o yaml`
+- To inject secrets to Pod definition, we have some ways:
+  - Inject the entire secret
+  ```yaml
+    # ...
+    containers:
+      - #...
+        envFrom:
+          secretRef:
+            name: <secret-name>
+  ```
+  - Inject single env value
+    ```yaml
+    #...
+    containers:
+      - #...
+        env:
+          - name: DB_Password
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: DB_PASSWORD
+    ```
+  - Inject the entire secret as file in volume
+    ```yaml
+    # ...
+    volumes:
+      - name: db-secret-volume
+        secret:
+          secretName: db-secret
+    ```
+    - Note that in this way, each secret value will be stored in a separated file. For example DB_PASSWORD value will be sit in `/opt/db-secret-volumes/DB_PASSWORD` file.
 
 # Additional Commands
 
