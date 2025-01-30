@@ -462,6 +462,9 @@ metadata:
   ```
   or you can generate YAML file using dry-run `k run my-nginx --image=nginx --dry-run=client -o yaml --command -- sleep 1000`. Note that `--` part should be at the end.
 - To see what's the owner of the Pod (like ReplicaSet, Deployment, etc), get yaml of Pod using `kubectl get pod {PodName} -n {Namespace} -o yaml` and look for `ownerReferences -> kind`.
+- To run a command in a container in ad Pod, run `kubectl exec -it <podName> -- <command>`, for example:
+  - `k exec -it myPod -- cat /logs/logs.txt` to print content of logs.txt file
+  - `k exec -it myPod -- sh` to enter interactive command line of the container.
 
 # Scheduler
 ## Fundamentals
@@ -995,6 +998,12 @@ metadata:
           secretName: db-secret
     ```
     - Note that in this way, each secret value will be stored in a separated file. For example DB_PASSWORD value will be sit in `/opt/db-secret-volumes/DB_PASSWORD` file.
+
+### Encrypt data at rest
+- If we want to encrypt data at rest (like secrets), see [Encrypting Confidential Data at Rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/)
+
+## Multi-container Pods
+- Sometimes we may like to place more than one container in a Pod. Than Pod will act like a localhost for all those containers and they can easily access each other without network configuration or access to the same data storage (inside Pod) together.
 
 # Additional Commands
 
