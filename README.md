@@ -919,9 +919,9 @@ metadata:
       - #...
         envFrom:
           - configMapRef:
-            name: app-config
+              name: app-config
           - configMapRef:
-            name: db-config
+              name: db-config
     ```
 - To inject single env from configMap:
   ```yaml
@@ -971,8 +971,8 @@ metadata:
     containers:
       - #...
         envFrom:
-          secretRef:
-            name: <secret-name>
+          - secretRef:
+              name: <secret-name>
   ```
   - Inject single env value
     ```yaml
