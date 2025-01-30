@@ -962,7 +962,7 @@ metadata:
       DB_PASSWORD: cGFzc3dk
     ```
     - Note that the values should be `base64` encoded.
-    - To `base64` encode, run `echo -n "{myvalue}" | base64` in command line, and to decode run `echo -n "{myvalue}" | base64 --decode`.
+    - To `base64` encode, run `echo -n "<myvalue>" | base64` in command line, and to decode run `echo "<myvalue>" | base64 --decode`.
 - Secret values will be hidden in `k describe secrets`. If you want to see values, use `k get secret <secret-name> -o yaml`
 - To inject secrets to Pod definition, we have some ways:
   - Inject the entire secret
