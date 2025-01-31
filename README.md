@@ -1029,8 +1029,11 @@ spec:
 - Normally, when a Pod in a Node gets down for {evictTime*} minutes (5 minutes by default), kubectl will consider it as dead. It the Pod was part of a ReplicaSet (or Deployment), it'll be recreated, otherwise it'll get ignored.
   - *evictTime is the time is the duration a Pod should be down to marked as dead by Kubectl. By default its value is 5 minutes, but we can change it using `kube-controller-manager --pod-eviction-timeout=5m0s ...`
 - If we intentionally want to make a maintenance on OS (like upgrade it), all Pods should be moved to other Nodes to prevent downtime. Fo such purpose, we should run `kubectl drain {NodeName}`. This command will move all Pods to other Nodes (actually, it'll recreat them in other Nodes) and will be marked as `unschedulable` to prevent any new Pod created in it.
+  - Note1: If the Node has daemonSets, drain command will fail. But we can ignore daemonSets using `kubectl drain {nodeName} --ignore-daemonsets`
+  - Note2: If any of the Pods in the Node is standalone (not part or replicaset), the command will fail again. To ignore standalone Pods, run `kubectl drain {nodeName} --force`. That standalone Pod will get lost and won't be recreated.
 - After our maintenance on Node, we can restore it to `schedulable` state by running `kubectl uncordon {nodeName}`. With this change, Node will accept new Pods (but recently moved Pods won't move back automatically)
 - If we want to just change Node status to `unschedulable` without moving out the Pods, run `kubectl codron {nodeName}`.
+
 
 # Additional Commands
 
