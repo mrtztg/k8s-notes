@@ -1005,6 +1005,25 @@ metadata:
 ## Multi-container Pods
 - Sometimes we may like to place more than one container in a Pod. Than Pod will act like a localhost for all those containers and they can easily access each other without network configuration or access to the same data storage (inside Pod) together.
 
+## InitContainers
+- If any of the containers in Pod finish its job or crashes, the whole Pod will get restarted. So, what should we do if we have a script or job that want to run **before** the actual container starts. But we don't want the whole Pod gets restarted when that side container finished its job. InitContainers is the solution.
+- InitContainer and their definitions are very similar to actual containers, but they gets executed before actual containers. They should be short-running jobs not persistent. Also if we define more than one initContainers, they'll run **one at a time in sequential order**
+- InitContiners should run successfully, otherwise the Pod will get restarted if InitContainer fail.
+```yaml
+kind: Pod
+# ...
+spec:
+  containers:
+    - name: myapp-container
+      image: busybox
+      command: ['sh', '-c', 'echo The app is running && sleep 3600']
+  initContainers:
+    - name: init-service
+      image: busybox
+      command: ['sh', '-c', 'git clone <some-repository-that-will-be-used-by-application> ; done;']
+```
+
+
 # Additional Commands
 
 - Get all running components in groups: `kubectl get all`
