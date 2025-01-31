@@ -1008,7 +1008,7 @@ metadata:
 ## InitContainers
 - If any of the containers in Pod finish its job or crashes, the whole Pod will get restarted. So, what should we do if we have a script or job that want to run **before** the actual container starts. But we don't want the whole Pod gets restarted when that side container finished its job. InitContainers is the solution.
 - InitContainer and their definitions are very similar to actual containers, but they gets executed before actual containers. They should be short-running jobs not persistent. Also if we define more than one initContainers, they'll run **one at a time in sequential order**
-- InitContiners should run successfully, otherwise the Pod will get restarted if InitContainer fail.
+- InitContiners should run successfully (exitCode=0), otherwise the Pod will get restarted if InitContainer fail.
 ```yaml
 kind: Pod
 # ...
@@ -1022,6 +1022,7 @@ spec:
       image: busybox
       command: ['sh', '-c', 'git clone <some-repository-that-will-be-used-by-application> ; done;']
 ```
+- If a Pod is not READY, check `READY` column in `k get po`. If you see `Init:..` Means it's in stage or running initContainers. So, look at definition of its initContainers. If there is a problem in initContiner running, we can find it usineg `k logs {podName} -c initContainers`
 
 
 # Additional Commands
