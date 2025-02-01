@@ -1043,6 +1043,7 @@ spec:
   - `1.8.x` <= `kubelet` <= `1.10.x` . Can be `-2` minor version
   - `1.8.x` <= `kube-proxy` <= `1.10.x` . Can be `-2` minor version
   - `1.9.x` <= `kubectl` <= `1.11.x` . Can be `-1` and `+1` minor version
+- Use `kubeadm upgrade plan` to get version of components in cluster.
 - We can upgrade to up to 1 version at a time. Means if we want to upgrade from version `1.10.15` to `1.12.3`, we should upgrade to version `1.11.x`, then to `1.12.3`.
 - Upgrading k8s cluster in major cloud providers (like GCP, AWS, Azure) is very easy. `kubeadm` is also not that hard. But if we installed kubernetes manually, upgrading the cluster will be hard.
 - In the upgrade process, we'll start with upgrading master node. During its upgrade, Master Node and all its components (e.g Controller-manager, kube-scheduler, so on) will be down. But, Worker Nodes will keep running Pods as they are, but there is not Master Node to manage them.
@@ -1054,16 +1055,22 @@ spec:
   3. Create new Node with new version before `drain`ing each Node. So, its load (Pods) will be moved to the newly created Pod
   ![Worker Node Upgrade Strategy 3](assets/images/48_worker_node_upgrade_strategy3.png)
 - For upgrading cluster using `kubeadm`, run `kubeadm upgrade plan`. It'll show the next command we should run for upgrade. So, after this command, for example we want to upgrade from `v1.10.0` to `v1.11.0`:
-  1. We should get the desired version of `kubeadm` first: `apt upgrade -y kubeadm=1.12.0-00`
-  2. Then apply it using `kubeadm upgrade apply v1.12.0`
-  3. Note that kubeadm won't upgrade `Kubelet` in any of the Nodes. We should upgrade them manually later.The version we see in `kubectl get nodes` is the **Kubelet** version on those Nodes, not version of other components (like Controller-manager, etc). So after upgrading kubeadm and components, `VERSION` in `kubectl get nodes` will stay the same until we upgrade the `kubectl` on each of those Nodes.
-  4. Now for each Worker Pod (or even if the Master Node has kubelet), we should run `kubectl drain {NodeName}` command **Master Node**
-  5. Now connect to the Node, and get kubeadm using `apt upgrade -y kubeadm=1.12.0-00`
-  6. Then get kubelet using `apt upgrade -y kubelet=1.12.0-00`
-  7. Then apply upgrade using `kubeadm upgrade node config -kubelet-version v1.12.0`
-  8. And restart kubelet service using `systemctl restart kubelet`
-  9. Now jump back to **Master Node** and run `kubectl undercon {nodeName}`
-  10. Repeat steps 4 to 9 for remaining Nodes that have kubelet
+  1. Update package resouce to desired *major version* using (replace 1.28 with your desired major version) with editing file `etc/apt/sources.list.d/kubernetes.list` and make it:
+    - `deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /`
+  2. Then run `apt update` and `apt-cache madison kubeadm` to see available version.
+  3. We should get the desired version from previous step of `kubeadm` using command like `apt upgrade -y kubeadm=1.12.0-00`
+  4. Then apply it using `kubeadm upgrade apply v1.12.0` (no hyphen... appended)
+  5. Note that kubeadm won't upgrade `Kubelet` in any of the Nodes. We should upgrade them manually later.The version we see in `kubectl get nodes` is the **Kubelet** version on those Nodes, not version of other components (like Controller-manager, etc). So after upgrading kubeadm and components, `VERSION` in `kubectl get nodes` will stay the same until we upgrade the `kubectl` on each of those Nodes.
+    
+  Now for each Worker Pod (and MasterNode if it hase kubelet):
+  1. Run `kubectl drain {NodeName}` command in **Master Node**
+  2. Now connect to the Node, and update `/etc/apt/sources.list.d/kubernetes.list` like how did in MasterNode
+  3. Upgrade kubeadm using `apt upgrade -y kubeadm=1.12.0-00` if it has kubeadm
+  4. Then get kubelet using `apt upgrade -y kubelet=1.12.0-00`
+  5. Then apply upgrade using `kubeadm upgrade node config -kubelet-version v1.12.0`
+  6. And restart kubelet service using `systemctl restart kubelet`
+  7. Now jump back to **Master Node** and run `kubectl undercon {nodeName}`
+  8. Repeat steps 1 to 6 for remaining Nodes that have kubelet
 - Full guide to upgrade: [Upgrade kubeadm clusters](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)
 
 # Additional Commands
