@@ -1030,10 +1030,41 @@ spec:
   - *evictTime is the time is the duration a Pod should be down to marked as dead by Kubectl. By default its value is 5 minutes, but we can change it using `kube-controller-manager --pod-eviction-timeout=5m0s ...`
 - If we intentionally want to make a maintenance on OS (like upgrade it), all Pods should be moved to other Nodes to prevent downtime. Fo such purpose, we should run `kubectl drain {NodeName}`. This command will move all Pods to other Nodes (actually, it'll recreat them in other Nodes) and will be marked as `unschedulable` to prevent any new Pod created in it.
   - Note1: If the Node has daemonSets, drain command will fail. But we can ignore daemonSets using `kubectl drain {nodeName} --ignore-daemonsets`
-  - Note2: If any of the Pods in the Node is standalone (not part or replicaset), the command will fail again. To ignore standalone Pods, run `kubectl drain {nodeName} --force`. That standalone Pod will get lost and won't be recreated.
+  - Note2: If any of the Pods in the Node is standalone (not part of RepliaSet, ReplicationController, Job, DaemonSet or StatefulSet), the command will fail again. To ignore standalone Pods, run `kubectl drain {nodeName} --force`. That standalone Pod will get lost and won't be recreated.
 - After our maintenance on Node, we can restore it to `schedulable` state by running `kubectl uncordon {nodeName}`. With this change, Node will accept new Pods (but recently moved Pods won't move back automatically)
 - If we want to just change Node status to `unschedulable` without moving out the Pods, run `kubectl codron {nodeName}`.
 
+## Kubernetes Cluster Upgrade
+- Consider that k8s supports cluster versions only for 14 months, we need to take care of upgrading. But there is a note here. Because we need to upgrade the different parts of k8s seperately (to keep our server alive), we should take care of different parts' version compatibility.
+![Cluster version format](assets/images/47_cluster_version_format.png)
+- If `api-server`'s version = `1.10.x`
+  - `1.9.x` <= `Controller-manager` <= `1.10.x`. Can be `-1` minor version
+  - `1.9.x` <= `kube-scheduler` <= `1.10.x` . Can be `-1` minor version
+  - `1.8.x` <= `kubelet` <= `1.10.x` . Can be `-2` minor version
+  - `1.8.x` <= `kube-proxy` <= `1.10.x` . Can be `-2` minor version
+  - `1.9.x` <= `kubectl` <= `1.11.x` . Can be `-1` and `+1` minor version
+- We can upgrade to up to 1 version at a time. Means if we want to upgrade from version `1.10.15` to `1.12.3`, we should upgrade to version `1.11.x`, then to `1.12.3`.
+- Upgrading k8s cluster in major cloud providers (like GCP, AWS, Azure) is very easy. `kubeadm` is also not that hard. But if we installed kubernetes manually, upgrading the cluster will be hard.
+- In the upgrade process, we'll start with upgrading master node. During its upgrade, Master Node and all its components (e.g Controller-manager, kube-scheduler, so on) will be down. But, Worker Nodes will keep running Pods as they are, but there is not Master Node to manage them.
+- After we upgrade Master Node, we have 3 strategies to upgrade Worker Ndoes
+  1. Upgrade all Worker Nodes at once. This will make our whole app down during the upgrade. So, it's not a good strategy if we don't want our users lose access to our app
+  ![Worker Node Upgrade Strategy 1](assets/images/48_worker_node_upgrade_strategy1.png)
+  2. Upgrade Nodes one by one. So, we'll `drain` one Node, upgrade it, then `urcordon` it.
+  ![Worker Node Upgrade Strategy 2](assets/images/48_worker_node_upgrade_strategy2.png)
+  3. Create new Node with new version before `drain`ing each Node. So, its load (Pods) will be moved to the newly created Pod
+  ![Worker Node Upgrade Strategy 3](assets/images/48_worker_node_upgrade_strategy3.png)
+- For upgrading cluster using `kubeadm`, run `kubeadm upgrade plan`. It'll show the next command we should run for upgrade. So, after this command, for example we want to upgrade from `v1.10.0` to `v1.11.0`:
+  1. We should get the desired version of `kubeadm` first: `apt upgrade -y kubeadm=1.12.0-00`
+  2. Then apply it using `kubeadm upgrade apply v1.12.0`
+  3. Note that kubeadm won't upgrade `Kubelet` in any of the Nodes. We should upgrade them manually later.The version we see in `kubectl get nodes` is the **Kubelet** version on those Nodes, not version of other components (like Controller-manager, etc). So after upgrading kubeadm and components, `VERSION` in `kubectl get nodes` will stay the same until we upgrade the `kubectl` on each of those Nodes.
+  4. Now for each Worker Pod (or even if the Master Node has kubelet), we should run `kubectl drain {NodeName}` command **Master Node**
+  5. Now connect to the Node, and get kubeadm using `apt upgrade -y kubeadm=1.12.0-00`
+  6. Then get kubelet using `apt upgrade -y kubelet=1.12.0-00`
+  7. Then apply upgrade using `kubeadm upgrade node config -kubelet-version v1.12.0`
+  8. And restart kubelet service using `systemctl restart kubelet`
+  9. Now jump back to **Master Node** and run `kubectl undercon {nodeName}`
+  10. Repeat steps 4 to 9 for remaining Nodes that have kubelet
+- Full guide to upgrade: [Upgrade kubeadm clusters](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)
 
 # Additional Commands
 
@@ -1085,6 +1116,7 @@ You can get this list using `kubectl api-resources`
 - Always verify your performed change during the exam. Like check your created Pod is READY. 
 - k8s in exam has been installed using `kubeadm`  which
   - already deployed etcd, Kube-Apiserver, Kube-Scheduler, Kube-Controller-Manager as Pods
+- During the exam, if `k` alias is not set, set it yourself by running `alias k=kubectl`
 - Createing YAML files are time consuming during the exam. Instead try to use imperative commands as much as possible. If complex changes required (like multiple containers, env variables, so on) try to use dry-run to save time by creating template YAML.
   - Create an NGINX Pod 
     - `kubectl run nginx --image=nginx`
