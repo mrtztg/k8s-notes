@@ -38,7 +38,11 @@
 
 - To find out whether the ETCD of a node is Stacked (inside the node itself) or an external ETCD, check with 2 methods:
   - Check, `etcd` Pod exist in Pods list alongside other kube Pods. If exists, ETCD is most likely Stacked If exists, ETCD is most likely Stacked
-  - Run `k describe -n kube-system pod kube-api-server...` and look at `--etcd-servers`. If the IP was local IP (127.0.0.1:xxxx), then it's Stacked ETCD.
+  - Check if there are static Pod definitions for other components (like kube-scheduler) in `/etc/kubernetes/manifests/`, but not for ETCD.
+  - Run `k describe -n kube-system pod kube-api-server...` and look at `--etcd-servers`. If the IP was local IP (127.0.0.1:xxxx), then it's Stacked ETCD. If it's not local, then it's external ETCD, that that IP is IP of that external ETCD server.
+
+- If you're in a machine that has standalone ETCD (without kubernetes) and want to see ETCD description, run `ps -ef | grep -i etcd` or `ps -aux | grep -i etcd`
+- If we want to know how many nodes are part of a etcd-cluster, run `ETCDCTL_API=3 etcdctl member list --endpoints={endpointUrl} --cert={certFile} --key={keyFile} --cacert={caCertFile}`. Now, count the result lines.
 
 ### Kube-apiserver
 
@@ -1094,7 +1098,7 @@ spec:
       - Also ETCD comes with built-in snapshot solution.
         - First set ETCTCTL api version using: `export ETCDCTL_API=3` 
         - To do backup, run `etcdctl snapshot save my_snapshot.db`
-        - To view status of snapshot `ectdctl snapshot status my_snapshot.db`
+        - To view status of snapshot `ectdctl snapshot status my_snapshot.db -w table`
         - To restore the backup (if we installed k8s manually)
           - Firstly, stop *kube-api-server* using `service kube-apiserver stop` (because ETCD restore will restart ETCD cluster, which is required by *kube-api-server*)
           - Run `etcdctl snapshot restore my_snapshot.db --data-dir /var/lib/etcd-from-backup`. This will configure *new cluster* to prevent joining new members to the old cluster
@@ -1115,7 +1119,7 @@ spec:
               --key={keyFile} ## Can find it in '--key-file' in ETCD Pod describe or etcd.service
               --cert={certFile} ## Can find in '--cert-file'
               --cacert={caCertFile} ## Can find in '--trusted-ca-file'
-              --endpoints={endPoint} ## Can find it in '--listen-client-urls'
+              --endpoints={endPoint} ## Can find it in '--advertise-client-urls (for access from outside) or --listen-client-urls (for access from inside)'
        ```
     ![ETCDCTL params](assets/images/49_etcdctl_params.png)
   - Persistent Volumes (if we have any)
