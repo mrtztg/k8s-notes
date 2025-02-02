@@ -1123,7 +1123,48 @@ spec:
        ```
     ![ETCDCTL params](assets/images/49_etcdctl_params.png)
   - Persistent Volumes (if we have any)
-- 
+
+# Security
+## Basics
+- Security in k8s is important. E.g security the server, etc. But securing `kube-apiserver` is one of the most important ones because its the gateway between k8s components and world outside.
+- When security of `kube-apiserver` comes in, there are 2 questions:
+  - [**Authentication**] Who can access? We can achieve this using:
+    - Files that holds username and passwords
+    - Files that holds username and tokens
+    - Certificates
+    - External Authentication provider - LDAP
+    - Service Accounts
+  - [**Authorization**] What they can do? We can achieve this using:
+    - RBAC Authorization
+    - ABAC Authorization
+    - Node Authorization
+    - Webhook Mode
+- All communication between k8s components (like betwen apiserver and etcd) are secured by TLS
+- By default all Pods can access to each other. But we can control these communication between applications and Pods using **Network Policies**
+
+## Authentication
+- We can have authentication mechanism for Admins (using kubectl), Developers (using curl api-server) and Bots to access to our k8s.
+- For bots, we can do it using `kubectl create serviceaccount {serviceAccountName}`. But for admins and developers, we need other solutions like storing username passwords in a file.
+- api-server authenticates the user before processing request:
+  ![api server auth](assets/images/50_apiserver_auth.png)
+- For defining auth user&pass using a file, we create a CSV file with 3 column: password,username,userId,group (group column is optional) like this:
+    ```
+    password1,user1,u001,group1
+    password2,user2,u002,group1
+    password3,user3,u003,group2
+    ```
+    - Then we pass the path of that file in kube-apiserver.service if we installed k8s manually, or api-server's Pod definition if we installed using kubeadm:
+    ![apiserver userpass auth](assets/images/51_apiserver_file_auth.png)
+    - Now for connecting to this apiserver, specify username&pass like this:
+    ![userpass in curl](assets/images/52_userpass_in_curl.png)
+
+- For defining auth using user&token file, create similar CSV file, but first column should be token:
+  - ```csv
+    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9,user1,u001,group1
+    ```
+  - Then pass it in kube-apiserver config with `--token-auth-file` key.
+  - For connecting to this apiserver, use:
+  ![usertoken in curl](assets/images/53_usertoken_in_curl.png)
 
 # Additional Commands
 
