@@ -36,6 +36,10 @@
 
 ![etcd config in manual setup](assets/images/06_ectd_manual_service.png)
 
+- To find out whether the ETCD of a node is Stacked (inside the node itself) or an external ETCD, check with 2 methods:
+  - Check, `etcd` Pod exist in Pods list alongside other kube Pods. If exists, ETCD is most likely Stacked If exists, ETCD is most likely Stacked
+  - Run `k describe -n kube-system pod kube-api-server...` and look at `--etcd-servers`. If the IP was local IP (127.0.0.1:xxxx), then it's Stacked ETCD.
+
 ### Kube-apiserver
 
 - `kube-apiserver` is primary management service in k8s. It sits in the centre of all tasks and changes made on k8s cluster. Actually, `kubectl` command reaches to `kube-apiserver` . It’s the only service that deal with `etcd`.
@@ -379,7 +383,7 @@ spec:
       name: dev
     ```
   - To set another namespace as current NS, use:
-    - `kubectl config set-context $(kubectl config current-context) --namespace=dev`
+    - `kubectl config set-context $(kubectl config current-context) --namespace=dev`. Or `kubectl config set-context --current --namespace=dev`
     - Now you switch to this NS and don't need to define `--namespace` parameter to accessing resources in it.
   - To view resources in name spaces, use `--all-namespaces`, like `kubectl get po --all-namespace`
 - We can define policies for each NS using Quotas, either using command parameters or definition file:
@@ -465,6 +469,12 @@ metadata:
 - To run a command in a container in ad Pod, run `kubectl exec -it <podName> -- <command>`, for example:
   - `k exec -it myPod -- cat /logs/logs.txt` to print content of logs.txt file
   - `k exec -it myPod -- sh` to enter interactive command line of the container.
+
+## Cluster, Node and Namespace extra Notes
+- To see Node info (like how many clusters does it have access to), run `k config view`
+- To switch the cluster, use `k config use-context {clusterName}`
+- To find out current cluster and context, run ` k config get-contexts`
+- To set default namespace, use `k config set-context --current --namespace={namespaceName}`
 
 # Scheduler
 ## Fundamentals
@@ -1065,13 +1075,51 @@ spec:
   Now for each Worker Pod (and MasterNode if it hase kubelet):
   1. Run `kubectl drain {NodeName}` command in **Master Node**
   2. Now connect to the Node, and update `/etc/apt/sources.list.d/kubernetes.list` like how did in MasterNode
-  3. Upgrade kubeadm using `apt upgrade -y kubeadm=1.12.0-00` if it has kubeadm
-  4. Then get kubelet using `apt upgrade -y kubelet=1.12.0-00`
-  5. Then apply upgrade using `kubeadm upgrade node config -kubelet-version v1.12.0`
-  6. And restart kubelet service using `systemctl restart kubelet`
-  7. Now jump back to **Master Node** and run `kubectl undercon {nodeName}`
-  8. Repeat steps 1 to 6 for remaining Nodes that have kubelet
+  3. Upgrade kubelet and kubectl using `apt upgrade -y kubelet=1.12.0-00 kubectl=1.12.0-00`.
+  4. And restart services using `systemctl daemon-reload` and `systemctl restart kubelet`
+  5. Now jump back to **Master Node** and run `kubectl undercon {nodeName}`
+  6. Repeat steps 1 to 6 for remaining Nodes that have kubelet
 - Full guide to upgrade: [Upgrade kubeadm clusters](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)
+
+## Backup and Restore
+- In k8s cluster, there are 3 candidates for backup:
+  - Resource Configuration
+    - To backup resources configurations, a good way is always have and up-to-date definition files of our resources (Pod definitions, Deploy, so on). But sometimes our different departments use imperative commands to create & update resources (not using definition file). In such situation that our definition files does not reflect the actual resources on k8s cluster, we may use:
+      - Run `kubectl get all --all-namespaces -o yaml > all-deploy-services.yaml` to extract config of our resources. But it won't export all resource groups, so better to use the next solution
+      - Use k8s backup tools like *VELERO*.
+  - ETCD Cluster 
+    - ETCD Cluster stores information about state of our cluster (like Nodes, so on), It's hosted on in MasterNode(s). While configuring ETCD, we configured data folder in `etcd.service` (e.g `--date-dir=/var/lib/etcd`).
+    - To backup ETCD Cluster:
+      - We set a backup tool to backup ETCD data directory (that we can find in etcd.service)
+      - Also ETCD comes with built-in snapshot solution.
+        - First set ETCTCTL api version using: `export ETCDCTL_API=3` 
+        - To do backup, run `etcdctl snapshot save my_snapshot.db`
+        - To view status of snapshot `ectdctl snapshot status my_snapshot.db`
+        - To restore the backup (if we installed k8s manually)
+          - Firstly, stop *kube-api-server* using `service kube-apiserver stop` (because ETCD restore will restart ETCD cluster, which is required by *kube-api-server*)
+          - Run `etcdctl snapshot restore my_snapshot.db --data-dir /var/lib/etcd-from-backup`. This will configure *new cluster* to prevent joining new members to the old cluster
+          - Modify `etcd.service` to use new etcd data directory by modifing to like `--data-dir=/var/lib/etcd-from-backup`
+          - Reload daemon with `systemctl daemon-reload` and restart service with `service etcd restart`
+          - Re-run kube-api-server using `service kube-api-server start`
+        - To restore backup (if we installed k8s using kubeadm)
+          - Run `etcd snapshot restore my_snapshot.db --data-dir /var/lib/my-etcd-from-backup`.
+          - Since *kubeadm* installs ETCD as a static Pod (Check *static pod* section if you curious how to distinguish static pod), we should modify data-dir in static Pod.
+          - Find ETCD static Pod definition (find static pod manifests folder using `ps -aux | grep kubectl`)
+          - Consider that `--data-dir` in ETCD Pod definition file is inside the container, it's mounted to a directory in host file. So, find the the related hostPath in volumes section and modify that, instead of directly --data-dir in container section.
+          - After making changes, k8s will restart the Pod. It may take minutes.
+          - If the Pod remains on Pending state for a long time, delete it `k delete po -n kube-system {etcdContainerName}`
+    - Note: In all `etcdctl` commands, don't forget to set endpoint, cacert, cert and key if our ETCD is using TLS (can identify from describe)
+       ```bash
+       export ETCDCTL_API=3;
+       etcdctl snapshot save my-snapshot.db \
+              --key={keyFile} ## Can find it in '--key-file' in ETCD Pod describe or etcd.service
+              --cert={certFile} ## Can find in '--cert-file'
+              --cacert={caCertFile} ## Can find in '--trusted-ca-file'
+              --endpoints={endPoint} ## Can find it in '--listen-client-urls'
+       ```
+    ![ETCDCTL params](assets/images/49_etcdctl_params.png)
+  - Persistent Volumes (if we have any)
+- 
 
 # Additional Commands
 
