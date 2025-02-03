@@ -1165,6 +1165,17 @@ spec:
   - Then pass it in kube-apiserver config with `--token-auth-file` key.
   - For connecting to this apiserver, use:
   ![usertoken in curl](assets/images/53_usertoken_in_curl.png)
+- Note: Basic authentication (either user&pass or user&token) is not a secure and recommended. It's deprecated in v1.19.
+
+## TLS
+- There are 3 types of certificates in the lifecycle of our app or sevice:
+  - CA certificate: CA uses this to sign the certificates.
+  - Server certificate: Server uses this to decrypt data received from client
+  - Client certificate: Client uses this to decrypt data received from server
+![3 certificates](assets/images/54_3_certificates.png)
+- Communication between all k8s components need to be secured using TLS.
+- What components in k8s will have "Server Certificate"?
+![Client Certificates for Clients](assets/images/55_client-certificates-for-clients.png)
 
 # Additional Commands
 
