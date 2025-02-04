@@ -1177,6 +1177,25 @@ spec:
 - What components in k8s will have "Server Certificate"?
 ![Client Certificates for Clients](assets/images/55_client-certificates-for-clients.png)
 
+- There are different tools to generate certificates. We use OPENSSL
+- First of all, we should have a Certificate Authority (CA). This will be our internal CA to sign all the certificates. To generate certificates for it:
+  - Run `openssl genrsa -out ca.key 2048` to generate key file.
+  - Run `openssl req -new -key ca.key -subj "/CN=KUBERNETES-CA" -out ca.csr` to generate *certificate signing request*
+    - Certificate Signing Request (CSR) is like a certificate with all your details, but without signature
+    - `/CN` stands for Common Name.
+  - Run `openssl x509 -req -in ca.csr -signkey ca.key -out ca.crt`
+    - Acually, signing a CSR should be done by CA, so -signkey should be CA's key. But in CA creation step, we'll sign it by its own key.
+- To generate certificate for ADMIN:
+  - Run `openssl genrsa -out admin.key 2048`
+  - Run `openssl req -new -key admin.key -subj "/CN=kube-admin/O=system:masters" -out admin.csr`.
+    - Note that `/CR` value can be anything. But provide a relevant one, because kube controller authenticate with it, and it shows everywhere in logs, etc
+    - `/O` is users groups. Because we want to differentiate admin users from other users, we should pass this in certificate.
+  - Run `openssl x509 -req in admin.csr -signkey ca.key -out admin.crt`
+- To all other clients, the process will be similar, only the `/CN` will be different:
+  - For *KUBE SCHEDULER*, it should start with *system* because it's a system component: `system:kube-scheduler`
+  - For *KUBE CONTROLLER MANAGER* : `system:kube-controller-manager`
+  - For *KUBE PROXY*: `system:kube-proxy`
+
 # Additional Commands
 
 - Get all running components in groups: `kubectl get all`
