@@ -1178,6 +1178,8 @@ spec:
 ![Client Certificates for Clients](assets/images/55_client-certificates-for-clients.png)
 
 - There are different tools to generate certificates. We use OPENSSL
+- We should have internal CA to sign certificates. It can be one CA for signing all components. But if we have a ETCD cluster for high availability purpose, we can also have a dedicated CA for signing ETCD related certificates (either server or client).
+- All components should have copy of ca.crt file as well. Means alongside their own certificate and key file, they should have CA's certificate file as well.
 - First of all, we should have a Certificate Authority (CA). This will be our internal CA to sign all the certificates. To generate certificates for it:
   - Run `openssl genrsa -out ca.key 2048` to generate key file.
   - Run `openssl req -new -key ca.key -subj "/CN=KUBERNETES-CA" -out ca.csr` to generate *certificate signing request*
@@ -1195,6 +1197,25 @@ spec:
   - For *KUBE SCHEDULER*, it should start with *system* because it's a system component: `system:kube-scheduler`
   - For *KUBE CONTROLLER MANAGER* : `system:kube-controller-manager`
   - For *KUBE PROXY*: `system:kube-proxy`
+
+
+- An example on how to send request to apiserver with admin user**
+  - `curl https://kube-apiserver:6443/api/v1/pods --key admin.key --cert admin.crt --cacert ca.crt`
+  - But instead of defining certificates in the command everytime, we can also define them in kube-config.yaml like this:
+    - ```yaml
+      apiVersion: v1
+      kind: Config
+      clusters:
+        - cluster:
+            certificate-authority: ca.crt
+            server: https://kube-apiserver:6443
+          name: kubernetes
+      users:
+        - name: kubernetes-admin
+          user:
+            client-certificate: admin.crt
+            client-key: admin.key
+      ```
 
 # Additional Commands
 
