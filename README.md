@@ -1179,7 +1179,10 @@ spec:
 
 - There are different tools to generate certificates. We use OPENSSL
 - We should have internal CA to sign certificates. It can be one CA for signing all components. But if we have a ETCD cluster for high availability purpose, we can also have a dedicated CA for signing ETCD related certificates (either server or client).
-- All components should have copy of ca.crt file as well. Means alongside their own certificate and key file, they should have CA's certificate file as well.
+- All components should have:
+  - Its certificate file signed by CA
+  - Its key file
+  - A copy of ca.crt file of CA
 - First of all, we should have a Certificate Authority (CA). This will be our internal CA to sign all the certificates. To generate certificates for it:
   - Run `openssl genrsa -out ca.key 2048` to generate key file.
   - Run `openssl req -new -key ca.key -subj "/CN=KUBERNETES-CA" -out ca.csr` to generate *certificate signing request*
@@ -1193,29 +1196,39 @@ spec:
     - Note that `/CR` value can be anything. But provide a relevant one, because kube controller authenticate with it, and it shows everywhere in logs, etc
     - `/O` is users groups. Because we want to differentiate admin users from other users, we should pass this in certificate.
   - Run `openssl x509 -req in admin.csr -signkey ca.key -out admin.crt`
+  - An example on how to send request to apiserver with admin user**
+    - `curl https://kube-apiserver:6443/api/v1/pods --key admin.key --cert admin.crt --cacert ca.crt`
+    - But instead of defining certificates in the command everytime, we can also define them in kube-config.yaml like this:
+      - ```yaml
+        apiVersion: v1
+        kind: Config
+        clusters:
+          - cluster:
+              certificate-authority: ca.crt
+              server: https://kube-apiserver:6443
+            name: kubernetes
+        users:
+          - name: kubernetes-admin
+            user:
+              client-certificate: admin.crt
+              client-key: admin.key
+        ```
 - To all other clients, the process will be similar, only the `/CN` will be different:
   - For *KUBE SCHEDULER*, it should start with *system* because it's a system component: `system:kube-scheduler`
   - For *KUBE CONTROLLER MANAGER* : `system:kube-controller-manager`
   - For *KUBE PROXY*: `system:kube-proxy`
-
-
-- An example on how to send request to apiserver with admin user**
-  - `curl https://kube-apiserver:6443/api/v1/pods --key admin.key --cert admin.crt --cacert ca.crt`
-  - But instead of defining certificates in the command everytime, we can also define them in kube-config.yaml like this:
-    - ```yaml
-      apiVersion: v1
-      kind: Config
-      clusters:
-        - cluster:
-            certificate-authority: ca.crt
-            server: https://kube-apiserver:6443
-          name: kubernetes
-      users:
-        - name: kubernetes-admin
-          user:
-            client-certificate: admin.crt
-            client-key: admin.key
-      ```
+- Now, let's generate certificate for components that act as server. First, *ETCD*:
+  - All steps are similar to previous. `/CN=etcd-server`.
+  - If our ETCD is deployed as a cluster across multiple servers for HA purpose, to secure connection between members of the cluster, we should also create *peer* certificate for each.
+    ![ETCD peer certificates](assets/images/56_etcd_peer_certificates.png)
+    ![Peer crt in config](assets/images/57_peer_crt_in_config.png)
+- For *KUBE API SERVER*, because different services and different people may know it by different names, we should add the following names addtional to the name we choose (like `KUBE-API-SERVER`) in the license: `kubernetes`, `kubernetes.default`, `kubernetes.default.svc` and `kubernetes.default.svc.cluster.local` and `<IpAddressesOfServerBehindApiServer>`. To create such certificate request (csr):
+  ![kube-api-server-certificate](assets/images/58_kube-api-server-certificate.png)
+  - Then pass these generated certificates, and client certificates for communicating with ETCD and kubelet:
+  - ![pass-kubeapiserver-certificates](assets/images/59_pass_kubeapiserver_certificates.png)
+- For *KUBELET* nodes (to act as server), the steps are similar, but ther /CN should be node01, node02, so on. Once the certificates are created, use them on `kubelet-config.yaml` for each node in the cluster:
+  - ![kubelet certificate config](assets/images/60_kubelet_certificate_config.png)
+- But we should also create client certificate for Nodes (to act as client agains apiserver). But because apiserver should verify these nodes and their access levels, their /CN should be like `system:node:node01`, `system:node:node02` and so on. And should have group (`/O`) `SYSTEM:NODES`
 
 # Additional Commands
 
