@@ -1230,6 +1230,14 @@ spec:
   - ![kubelet certificate config](assets/images/60_kubelet_certificate_config.png)
 - But we should also create client certificate for Nodes (to act as client agains apiserver). But because apiserver should verify these nodes and their access levels, their /CN should be like `system:node:node01`, `system:node:node02` and so on. And should have group (`/O`) `SYSTEM:NODES`
 
+- To view certificates of each component:
+  - First find the path the cerificate. E.g. For api-server it locates in `/etc/systemd/system/kube-appiserver.service` if you insatlled k8s manually, and locates in `/etc/kubernetes/manifests/kube-apiserver.yaml` (static pods definition location)
+  - Now, to see information of certificate file, run `openssl x509 -in <path-to-crt> -text -noout`. Verify the fields `Issuer`, `Not After`, `Subject`, `Alternate Name` fields very carefully. For example, *Issuer* should be *kubernetes* not something like *self*, or Expiration fields shouldn't be passed. Something like image below:
+    ![View certificate info](assets/images/61_view_certificate_info.png)
+- If you ran any issues with certificates (for example for etcd component), checkout the logs. If you installed k8s manually, check `journalctl -u <componentName>.service -l` or if you installed using kubeadm, run `kubectl logs <etcd-pod-name>`. In a case kube *kubectl* command have issue, you can see log directly from Docker using `docker logs <contrainerId>` (find containerId by running `docker ps -a`):
+  ![certificate logs](assets/images/62_certificate_logs.png)
+
+addrConn.createTransport failed to connect to {Addr: "127.0.0.1:2379", ServerName: "127.0.0.1:2379", }. Err: connection error: desc = "transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate signed by unknown authority"
 # Additional Commands
 
 - Get all running components in groups: `kubectl get all`
@@ -1315,3 +1323,9 @@ You can get this list using `kubectl api-resources`
   - `kubectl create service --help`
   - `kubectl create service clusterip --help`
   - `kubectl set image --help`
+- To inspect component errors, use one of the following ways:
+  - `kubectl logs <componentName>`
+  - `crictl ps -a` to list components, then `crictl logs containerId` to find the problem.
+  - `docker ps -a` and `docker logs <containerID>` if it has docker. 
+  - `journalctl -u <serviceName>`
+  - **Note**: Most of the times, you can start finind problem in apiserver component, because every other component talks to kube-apiserver
