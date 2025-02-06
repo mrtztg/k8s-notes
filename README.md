@@ -1240,6 +1240,36 @@ spec:
 - If in `kube-apiserver` logs we see an error related to `:2379` (or another port if we're not using default port for ETCD), think about ETCD. You may need to jump in logs of ETCD to find the issue.
 - In the following error, we see TLS verification failure. It means most likely crt is not signed at all, or signed by different CA than ETCD's CA:
   `addrConn.createTransport failed to connect to {Addr: "127.0.0.1:2379", ServerName: "127.0.0.1:2379", }. Err: connection error: desc = "transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate signed by unknown authority"`
+
+### Sign Certificates using Kubectl
+- Any user that want to have access to the kube-apiserver need to use a certificate. The user should give his `csr` (Certificate Sign Request) to admin, and admin sign it using CA or kubernetes. But because signing the CSRs need `.key` file of CA, and key file should be kept only in the kubernetes server (for keeping secure), the signing process will be time challenging for the admin. Kubectl has a built-in command for signing CSRs. This is the process:
+  - The user creates key using `openssl genrsa -out <username>.key 2048`
+  - Then he creates a CSR using `openssl -new -key <username>.key -subj "/CN=<username>" -out <username>.csr`
+  - He shares the CSR with admin. Admin encode CSR to base64: `cat <username>.csr | base64 -w 0`, because csr in definition file should be encoded
+  - Create definition file:
+    - ```yaml
+      apiVersion: certificates.k8s.io/v1
+      kind: CertificationSigningRequest
+      metadata:
+        name: <csrName>
+      spec:
+        expirationSeconds: 600 # Seconds
+        usages:
+          # The followings are just examples
+          - digital signature
+          - key encipherment
+          - client auth
+        request:
+          <encodedCsr>
+      ```
+  - Create the object using `kubectl create -f <username>_def.yaml`
+  - Admin can see list of CSRs using `kubectl get csr` and approve any of the using `kubectl certificate approve <csrName>`
+  - Now, after approving the CSR, run `kubectl get csr <csrName> -o yaml` and copy value inside **Status** > **Certificate** and decode it using `echo "<certValue>" | base64 --decode`.
+  - This decoded value is certificate. Share it with the user
+- This certificate signing is done by *CSR-APPROVING* and *CSR-SIGNIING* controllers inside *Controller Manager*. So, Controller Manager should have CA key and cert configured:
+  - ![Controller Manager Certificate](assets/images/63_controller_manager_config_certificate.png)
+    
+
 # Additional Commands
 
 - Get all running components in groups: `kubectl get all`
@@ -1290,6 +1320,14 @@ You can get this list using `kubectl api-resources`
 
 
 # Exam Tips
+- ✅ During the exam, you will have access to :
+  - Kubernetes official documentation
+  - kubectl CLI reference (e.g., kubectl explain pod)
+  - Man pages & --help command (e.g., kubectl --help)
+  - YAML schema references
+- 🚫 However, you will NOT have access to:
+  - Google or other search engines
+  - Third-party sites like Stack Overflow, Medium, or personal notes
 - Always verify your performed change during the exam. Like check your created Pod is READY. 
 - k8s in exam has been installed using `kubeadm`  which
   - already deployed etcd, Kube-Apiserver, Kube-Scheduler, Kube-Controller-Manager as Pods
