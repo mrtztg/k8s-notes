@@ -1167,7 +1167,7 @@ spec:
   ![usertoken in curl](assets/images/53_usertoken_in_curl.png)
 - Note: Basic authentication (either user&pass or user&token) is not a secure and recommended. It's deprecated in v1.19.
 
-## TLS
+## TLS & Certificates
 - There are 3 types of certificates in the lifecycle of our app or sevice:
   - CA certificate: CA uses this to sign the certificates.
   - Server certificate: Server uses this to decrypt data received from client
@@ -1269,7 +1269,7 @@ spec:
 - This certificate signing is done by *CSR-APPROVING* and *CSR-SIGNIING* controllers inside *Controller Manager*. So, Controller Manager should have CA key and cert configured:
   - ![Controller Manager Certificate](assets/images/63_controller_manager_config_certificate.png)
     
-### Config file
+## Config file
 - Actaully, for any call to apiserver, admin or user need to define certificate, key, CA and server (either curl command or kubectl) like:
   - ```bash
     kubectl get pods \
@@ -1334,6 +1334,16 @@ users:
 - Using command line, we can even change other things of config. See `kubectl config -h`
 - Instead of passing CA certificate file (and even for other certificates) in config file, we can pass the actual certificate itself (but encoded version using base64) like.
 - If we faced an error similar to `error: unable to read client-cert ...` in any **kubectl** command (like `kubectl get pods`), the problem is in TLS of user in our config. Check that.
+
+## API Groups
+![API Groups](assets/images/65_k8s_api_groups.png)
+- Most of the new and future API groups in k8s goes to **Named** group.
+- Knowing API groups will help us in giving permissions to k8s users.
+- To see available api groups run `curl https://<kubernetesServer>:<kubernetesPort> -k --key <clientKey> --cert <clientCert> --cacert <caCert>`, and to see named api groups run `curl https://<kubernetesServer>:<kubernetesPort>/apis -k  ...| grep "name"`
+  - If we don't define certificates or if our certificates has not enough permission, we'll receive 'Forbidden'. 
+- Normally, each time we want to run curl to our kube apiserver, we should define certificates. But another way is to run `kubectl proxy`. This will start a proxy on port `8001` and forwards every request to our kube apiserver and will also assign certificates based on config file.
+  - After enabling proxy, our curls will be like this: `curl https://localhost:8001 -k`
+  - Don't confuse between **kube proxy** and **kubectl proxy**.
 
 # Additional Commands
 
