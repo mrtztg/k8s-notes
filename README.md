@@ -1269,6 +1269,70 @@ spec:
 - This certificate signing is done by *CSR-APPROVING* and *CSR-SIGNIING* controllers inside *Controller Manager*. So, Controller Manager should have CA key and cert configured:
   - ![Controller Manager Certificate](assets/images/63_controller_manager_config_certificate.png)
     
+### Config file
+- Actaully, for any call to apiserver, admin or user need to define certificate, key, CA and server (either curl command or kubectl) like:
+  - ```bash
+    kubectl get pods \
+        --server my-kube-playgroud:6443 \
+        --client-key <path-to-key> \
+        --client-certificate <path-to-cert> \
+        --certificate-authority <path-to-ca-cert>
+    ```
+  or
+  - ```bash
+    curl http://my-kube-playground:6443/api/v1/pods -key <path-to-key> -cert <path-to-cert> -cacert <path-to-ca-cert>
+    ```
+- But there is a better solution, using **Config** file. By defining clusters, users and contexts in this file, we don't need to pass certificates in commmand anymore.
+- Config file should have 3 parts:
+  - Clusters
+  - Users: Note that, we're just using already created user, not creating a user.
+  - Contexts: To define which user connects to which cluster. Context can be many to many connection between cluster and user. Means we can define cluster for a specific user and vice versa.
+  ![Kube Config Diagram](assets/images/64_kube-config-diagram.png)
+  - Now, you can run your commands using the config file like `kubectl get pods --kubeconfig <path-to-config>`. But if your config file path be `$HOME/.kube/config` path, you don't need to pass --kubeconfig and just run `kubectl get pods`. You see? kubeadm and minikube created this file for us. That's the reason we don't need to define any certificate in `kubectl get pods` command.
+```yaml
+apiVersion: v1
+kind: Config
+# 'current-context' is optional. By defining this field, we tell k8s to use this by default.
+# When we use `kubectl config use-contex <contextName>`, k8s updates this value inside the config file
+current-context: finance@production
+clusters:
+  - name: my-kube-playground
+    cluster:
+      certificate-authority: ca.crt
+      server: https://my-kube-playground:6443
+  - name: google
+    cluster:
+      server: # ...
+      # We can define the actual certificate (but base64 encoded version) instead of passing file path.
+      certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCakNDQWU2Z0F3SUJBZ0lCQVRBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwdGFXNXAKYTNWaVpVTkJNQjRYRFRJMU1ERXdNekU1TVRJME5sb1hEVE0xTURFd01qRTVNVEkwTmxvd0ZURVRNQkVHQTFVRQpBeE1LYldsdWFXdDFZbVZEUVRDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTFlqCnh3aFh1TEkvbElNakdWK3hocGFjU3YwUVNWbVV1c1dYMUVNNWd5bWZNRGtQQzFQNnNYOFpzTVcrem0vMC9pb0cKcVhuOFp6VytRQ3JxSXd6ek1HOXNkRi9JWUpvd2FOaklDeVNZY0k3YTBqdGJMNlQzMzh0N2lmUXh3TGRKNVRtOApqKzhwM25rckxtQ1NyTUNSaURCdnYxWVppMW9iM3g3dDYxYitBUVB4dG9QdzRMOEQ3dmxCMC9uYXdWRDlzS1ZqCmkxN09JWW1xTkZ4YVN4L1BsbFdHV2hOOWFVMnBFaDUvRm1SQnlYVUVqb0pvQTFyWVprSDU5RFI4aW1XREtjRXEKZWY3a1FmTXBKN1UxeEllNUNqM3gyekJuR3F2VHdrTGtXdmU1UVFtRm9BV0JSVmp1VTMrcytNdmZHcE5wN0hjdwo2VlZpdjRBNE93d1NBK0l1S0xVQ0F3RUFBYU5oTUY4d0RnWURWUjBQQVFIL0JBUURBZ0trTUIwR0ExVWRKUVFXCk1CUUdDQ3NHQVFVRkJ3TUNCZ2dyQmdFRkJRY0RBVEFQQmdOVkhSTUJBZjhFQlRBREFRSC9NQjBHQTFVZERnUVcKQkJSR2pPdTduQnJoYmJWaWlVMXhtTG9leE1KSWFqQU5CZ2txaGtpRzl3MEJBUXNGQUFPQ0FRRUFRYzYrSlloMwpNY2FuemFhVG1rajRZQ2pBbGN1TndoTFV1aFhsWU5CRnB6Q0owajZhNHB5RmdON29JcVp4YVBCUStITGpCaEt1Cks5ZGcrVXZ6ZDdmZkM4blNnbFV5RU5TMDJlSjU1cVEzOEN4UDltcnZ5U2N4K3UvczByME1GU2h5V0ROTzJZME8KN0tNbGxMUmZTVW9GVktVREJmZTV5UjVsTW0wZXYwZDI5ZUFBU0ZmTmxRUkdpTDVERUFUWkpXckdhaDNOdlRTQQorNXg0RnNXRC95NU0wZVlXSE1BdUZEQWRsaEhxdDA4V1NLVDk0ZXdPa3Fzb1dnckNxYUZ6dndXWXo0YVhSaldWCmdZTG5QTDNidXhTaWw2N2V6SGlCQjMvblp1Q3o0eXhnazllTXQvdUV5WjdqeUJNdEtTSGc0NFVRdFJpbE1ncVIKUUIrYkRHdURWOHlTUXc9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  - name: dev # ...
+  - name: production # ...
+contexts:
+  - name: my-kube-admin@my-kube-playground
+    context:
+      cluster: my-kube-playground
+      user: my-kube-admin
+  - name: admin@production
+    context:
+      cluster: production
+      user: admin
+      ## namespace field is optional. It means when we switch to this context, namespace also will be set
+      namespace: finance
+users:
+  - name: my-kube-admin
+    user:
+      client-certificate: admin.crt
+      client-key: admin.key
+  - name: dev-user
+    user: #...
+  - name: prod-user # ...
+  - name: admin # ....
+```
+- Note that we don't need to any object using this definition file, just we need to use it in our kubectl or http calls of kubernetes.
+- To view the using config file, we can use command line as well `kubectl view config`
+- To change the context (which will automatically update config file as well), can run command `kubectl config use-context <contextNama>`
+- Using command line, we can even change other things of config. See `kubectl config -h`
+- Instead of passing CA certificate file (and even for other certificates) in config file, we can pass the actual certificate itself (but encoded version using base64) like.
 
 # Additional Commands
 
