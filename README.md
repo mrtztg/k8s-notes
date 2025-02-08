@@ -1333,6 +1333,7 @@ users:
 - To change the context (which will automatically update config file as well), can run command `kubectl config use-context <contextNama>`
 - Using command line, we can even change other things of config. See `kubectl config -h`
 - Instead of passing CA certificate file (and even for other certificates) in config file, we can pass the actual certificate itself (but encoded version using base64) like.
+- If we faced an error similar to `error: unable to read client-cert ...` in any **kubectl** command (like `kubectl get pods`), the problem is in TLS of user in our config. Check that.
 
 # Additional Commands
 
