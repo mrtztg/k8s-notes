@@ -406,6 +406,12 @@ spec:
       limits.memory: 10Gi
   ```
 
+## Namescope bound vs Cluster scoped
+- Some resources are bounded to namespaces. But others are in Cluster level and can't be bounded to a specific namespace. Some examples are:
+![Cluster vs Namespace scope](assets/images/68_cluster_vs_namespace_scope.png)
+
+- To see Cluster scope run `kubectl api-resources --namespaced=false` and for Namespace scope resources run `kubectl api-resources --namespaced=true`
+
 ## Imperative vs Declarative
 Kubernetes have 2 ways of managing infrastructure:
 
@@ -1366,6 +1372,7 @@ users:
 - We define authZ method(s) in `--authorization-mode=` in KubeAPI server config. It can be more than 1 method with comma separated. When you have multiple methoed configured, KUBE API will use each method in sequence to authorize the request, if the method denied the request, it'll jump to the next method in defined list, until reach the end.
 
 ### RBAC
+- Role bases access, grants permission in namespace scope. It won't affect the whole cluster.
 - First we craete (`k create -f <defFile.yaml>`) a Role using definition file:
   ```yaml
   apiVersion: rbac.authorization.k8s.io/v1
@@ -1373,9 +1380,9 @@ users:
   metadata:
     name: developer
   rules:
-    # If we leave 'apiGroups' means all of them
-    - apiGroups: [""]
-      resources: ["ConfigMap"]
+    # You can realise "apiGroup" of each resource type by checking `apiVersion` field of definition of that type in k8s documents. E.g if `apiVersion=apps/v1`, then apiGroup is 'apps'.
+    - apiGroups: ["apps"]
+      resources: ["deployments"]
       verbs: ["create"]
     - apiGroups: [""] 
       resources: ["pods"]
@@ -1405,6 +1412,10 @@ users:
 - If you (as user) want to check whether you have to access to perform a action in a cluster, run command like `kubectl auth can-i create pod`.
   - If you're admin and want to check a user's access, run `kubectl auth can-i create pod --as johndoe`
   - In both of the commands above, you can add `--namespace <NSName>` to check permission in specific Node
+  - If you want to perform a action as a user, add --as, like `kubectl get po --as johndoe`
+
+### Cluster Roles
+- If we want to grant privilege in cluster level (either to namespace scope resources like Pods or cluster scoped resources like Nodes), we should use cluster roles. 
 
 # Additional Commands
 
