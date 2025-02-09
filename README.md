@@ -1337,6 +1337,7 @@ users:
 
 ## API Groups
 ![API Groups](assets/images/65_k8s_api_groups.png)
+- (Don't need to remember diagram. Just understand it)
 - Most of the new and future API groups in k8s goes to **Named** group.
 - Knowing API groups will help us in giving permissions to k8s users.
 - To see available api groups run `curl https://<kubernetesServer>:<kubernetesPort> -k --key <clientKey> --cert <clientCert> --cacert <caCert>`, and to see named api groups run `curl https://<kubernetesServer>:<kubernetesPort>/apis -k  ...| grep "name"`
@@ -1344,6 +1345,66 @@ users:
 - Normally, each time we want to run curl to our kube apiserver, we should define certificates. But another way is to run `kubectl proxy`. This will start a proxy on port `8001` and forwards every request to our kube apiserver and will also assign certificates based on config file.
   - After enabling proxy, our curls will be like this: `curl https://localhost:8001 -k`
   - Don't confuse between **kube proxy** and **kubectl proxy**.
+
+## Authorization
+- We use authorization to limit access levels of developers or bots to the specific resources or api groups.
+- Some authZ methods that k8s supports:
+  - Node
+    - When each kubelet wants to Get information about Services, Endpoints, Nodes and Pods from Kube API server, or write information like Nodes status, Pod Status, Events to Kube API server. These privileges gets checked by *Node Authorizer*. Remember the `SYSTEM:NODES` we've as group to kubelets when creating certificates.
+  - ABAC
+    - Because we need to restart Kube api server after each change ABAC, and because we need to add new Policy for each user separately, it's difficult to manage compared to ABAC.
+    ![ABAC](assets/images/66_abac.png)
+  - RBAC
+    - It's easier than ABAC, because we create specific roles with permisions. Then add as many users as we want to that role.
+    ![RBAC](assets/images/67_rbac.png)
+  - Webhook
+    - We delegate user authorization to a 3rd party, like *Open Policy Agent*. KubeAPI will ask that service to whether grant access to the user or not.
+  - Always Allow
+    - Allows all requests without authZ checks
+  - Always Deny
+    - Denies all requests
+- We define authZ method(s) in `--authorization-mode=` in KubeAPI server config. It can be more than 1 method with comma separated. When you have multiple methoed configured, KUBE API will use each method in sequence to authorize the request, if the method denied the request, it'll jump to the next method in defined list, until reach the end.
+
+### RBAC
+- First we craete (`k create -f <defFile.yaml>`) a Role using definition file:
+  ```yaml
+  apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    name: developer
+  rules:
+    # If we leave 'apiGroups' means all of them
+    - apiGroups: [""]
+      resources: ["ConfigMap"]
+      verbs: ["create"]
+    - apiGroups: [""] 
+      resources: ["pods"]
+      verbs: ["list", "get", "create", "update", "delete"]
+      # resourceName field is optional. With this field, we limit the privilege to specific resources (E.g only Pods with name 'blue' and 'green', )
+      resourceNames: ["blue", "green"]
+  ```
+- Next we create a RoleBinding to bind user to the Role
+  ```yaml
+  apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: johndoe-developer-binding
+  # subject is the "thing" we want to add to this role. It can be "User" or "Group", so on.
+  subjects:
+    - kind: User
+      name: johndoe
+      apiGroup: rbac.authorization.k8s.io
+  roleRef:
+    kind: Role
+    name: developer
+    apiGroup: rbac.authorization.k8s.io
+  ```
+- Note: Role and RoleBindings fall under namespaces scope. If you want to create role or rolebinding for another namespace, define the namespace in `metadata`.
+- Run `kubectl get roles` to get roles and `kubectl describe role <roleName>` to get its information
+- Run `kubectl get rolebindings` to get roleBindings and `kubectl describe rolebinding <roleBindingName>` to get its info.
+- If you (as user) want to check whether you have to access to perform a action in a cluster, run command like `kubectl auth can-i create pod`.
+  - If you're admin and want to check a user's access, run `kubectl auth can-i create pod --as johndoe`
+  - In both of the commands above, you can add `--namespace <NSName>` to check permission in specific Node
 
 # Additional Commands
 
