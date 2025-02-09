@@ -411,6 +411,7 @@ spec:
 ![Cluster vs Namespace scope](assets/images/68_cluster_vs_namespace_scope.png)
 
 - To see Cluster scope run `kubectl api-resources --namespaced=false` and for Namespace scope resources run `kubectl api-resources --namespaced=true`
+- For getting list of cluster level resources (like Nodes, ClusterRoles, etc), you can't define `--all` or `-A` paramater.
 
 ## Imperative vs Declarative
 Kubernetes have 2 ways of managing infrastructure:
@@ -1384,9 +1385,9 @@ users:
     - apiGroups: ["apps"]
       resources: ["deployments"]
       verbs: ["create"]
-    - apiGroups: [""] 
-      resources: ["pods"]
-      verbs: ["list", "get", "create", "update", "delete"]
+    - apiGroups: [""] # if want to grant ANY api groups, pass "*"
+      resources: ["pods"] # if want to grant ANY resource, pass "*"
+      verbs: ["list", "get", "create", "update", "delete"] # if want to grant ANY verbs, pass '["*"]'
       # resourceName field is optional. With this field, we limit the privilege to specific resources (E.g only Pods with name 'blue' and 'green', )
       resourceNames: ["blue", "green"]
   ```
@@ -1407,6 +1408,7 @@ users:
     apiGroup: rbac.authorization.k8s.io
   ```
 - Note: Role and RoleBindings fall under namespaces scope. If you want to create role or rolebinding for another namespace, define the namespace in `metadata`.
+- We can also create either Role and Rolebinding using imperative commands. Run `k create role -h` to get information. Or even create definition using --dry-run.
 - Run `kubectl get roles` to get roles and `kubectl describe role <roleName>` to get its information
 - Run `kubectl get rolebindings` to get roleBindings and `kubectl describe rolebinding <roleBindingName>` to get its info.
 - If you (as user) want to check whether you have to access to perform a action in a cluster, run command like `kubectl auth can-i create pod`.
@@ -1414,8 +1416,48 @@ users:
   - In both of the commands above, you can add `--namespace <NSName>` to check permission in specific Node
   - If you want to perform a action as a user, add --as, like `kubectl get po --as johndoe`
 
-### Cluster Roles
-- If we want to grant privilege in cluster level (either to namespace scope resources like Pods or cluster scoped resources like Nodes), we should use cluster roles. 
+**Cluster Roles**
+- If we want to grant privilege in cluster level (**either to namespace scope resources like Pods or cluster scoped resources like Nodes**), we should use cluster roles. 
+- First we should create Cluster Role using such def file:
+  ```yaml
+  apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRole
+  metadata:
+    name: cluster-administrator
+  rules:
+    - apiGroups: [""]
+      resources: ["nodes"]
+      verbs: ["list", "get", "create", "delete"]
+    - apiGroups: [""]
+      resources: ["pods"]
+      verbs: ["list"]
+  ```
+- Then create ClusterRoleBinding using such def file:
+  ```yaml
+  apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: cluster-admin-role-binding
+  subjects:
+    - kind: User
+      name: cluster-admin
+      apiGroup: rbac.authorization.k8s.io/v1
+  roleRef:
+    kind: ClusterRole
+    name: cluster-administrator
+    apiGroup: rbac.authorization.k8s.io
+  ```
+- If we want to give access to any resources to the Role or ClusterRole:
+  ```yaml
+  # ...
+  kind: ClusterRole # or 'Role'
+  rules:
+    - apiGroups: ["*"]
+      resources: ["*"]
+      verbs: ["*"]
+    - nonResourceURLs: ["*"]
+      verbs: ["*"]
+  ```
 
 # Additional Commands
 
