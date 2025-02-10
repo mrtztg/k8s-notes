@@ -1381,7 +1381,7 @@ users:
   metadata:
     name: developer
   rules:
-    # You can realise "apiGroup" of each resource type by checking `apiVersion` field of definition of that type in k8s documents. E.g if `apiVersion=apps/v1`, then apiGroup is 'apps'.
+      # If you're not sure about apiGroups and resources values, run `k api-resources --namespaced=true`. Use 'NAME' column as resource, and use 'APIVERSION' without 'v1' suffix as apiGroups.
     - apiGroups: ["apps"]
       resources: ["deployments"]
       verbs: ["create"]
@@ -1425,6 +1425,7 @@ users:
   metadata:
     name: cluster-administrator
   rules:
+      # If you're not sure about apiGroups and resources values, run `k api-resources --namespaced=false`. Use 'NAME' column as resource, and use 'APIVERSION' without 'v1' suffix as apiGroups.
     - apiGroups: [""]
       resources: ["nodes"]
       verbs: ["list", "get", "create", "delete"]
