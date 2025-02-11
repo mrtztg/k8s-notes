@@ -1459,6 +1459,22 @@ users:
     - nonResourceURLs: ["*"]
       verbs: ["*"]
   ```
+### Service Accounts
+- Services accounts is authorization method for applications (e.g Prometheus, Jenkins, so on).
+- Run `kubectl create serviceaccount <aName>` to create ServiceAccount, and run `kubectl get serviceaccount` to list all serviceAccounts.
+- Now, we need a token from this service account, the the desired application can use this token to connect to the k8s api server as this serviceAccount.
+  - To generate token for this SA, run `kubectl create token <serviceAccountName>`. The token will get printed.
+  - If you want this SecretAccount to be used in a Pod, there is an easier way. Just define `serviceAccountName: <serviceAccountName>` in `spec` of Pod definition when want to create it. Then k8s will automatically generate a token from that ServiceAccount and will mount it to the Pod in path `var/run/secrets/kubernetes.io/serviceaccount`. Your app can easily read the token from there. You can see this projected volume by running `k describe pod <podName>`. Also to see the token, log in the Pod `k exec -it mykubernetescontainer -- /bin/bash` and walk to the serviceaccount path.
+  - Notes:
+    - If you don't assign the `serviceAccountName` in the Pod definition, k8s will use the `default` ServiceAccount. If you want to prevent k8s assign the default ServiceAccount to the Pod, add `automountServiceAccountToken: false` in Pod `spec`.
+    - The token that created for ServiceAccount will have 'audience' and 'expireDate' for better security. But when we use define 'serviceAccountName' in Pod definition, k8s will even add Pod information to the token to enhance security even more.
+- The token is JWT. So, you can decode it in jwt.io website.
+- Some notes about older k8s versions: 
+  - In old versions (< v1.24), k8s was creating long-life tokens without without audience field. Also, it was creating "Secret" to hold tokens, then mounted that secret to the Pod. But changed these behaviours for security enhancement.
+- After service account created, you now can grant permissions to it using RBAC method using imperative command. Means first create a Role with proper privileges, then run `k create rolebinding <newRoleBindingName> --serviceaccount=<namespace>:<serviceAccountName> --role=<roleName>`
+- When we have token of service account in hand, our application can use that token to authorize. For manual debugging, run something like `curl https://<kuberAddres>:<kuberPort>/api -insecure --header "Authoriation: Bearer <tokenOfServiceAccount>`
+
+### Fetch images from Private Repositories
 
 # Additional Commands
 
