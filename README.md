@@ -1459,6 +1459,26 @@ users:
     - nonResourceURLs: ["*"]
       verbs: ["*"]
   ```
+### Service Accounts
+- Services accounts is authorization method for applications (e.g Prometheus, Jenkins, so on).
+- Run `kubectl create serviceaccount <aName>` to create ServiceAccount, and run `kubectl get serviceaccount` to list all serviceAccounts.
+  - When we create a Pod, k8s will mount `default` ServiceAccount to the Pod as a volume. Run `k describe pod <podName>` section `Contrainers>Mounts`. Note that `default` serviceAccount has very limited permissions.
+  - If you want to see the token mounted in the Pod, go to the mounted path inside the container then `token` file like:
+    - `k exec -it mykubernetescontainer -- /bin/bash`
+    - Then go to the mounted path you found in Pod description. And print token file
+  - If you want to assign another serviceAccount in Pod creation, add `serviceAccountName` in `spec`. Like
+    ```yaml
+    kind: Pod
+    #...
+    spec:
+      containers: #...
+      serviceAccountName: <ServiceAccountName>
+    ```
+  - If you want to prevent k8s assign the default ServiceAccount to the Pod, add `automountServiceAccountToken: false` in Pod `spec`
+  - If your Kubernetes is older than 1.22, it'll create a *Secrets* with *token* inside as well; And will assign it to ServiceAccount. 
+  - If your Kubernetes is older than 1.24, even after token secret created, k8s will mount it as a volume inside the Pod
+- After service account created, you now can grant permissions to it using RBAC method.
+- When we have token of service account in hand, our application can use that token to authorize. For manual debugging, run something like `curl https://<kuberAddres>:<kuberPort>/api -insecure --header "Authoriation: Bearer <tokenOfServiceAccount>`
 
 # Additional Commands
 
