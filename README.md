@@ -1475,6 +1475,17 @@ users:
 - When we have token of service account in hand, our application can use that token to authorize. For manual debugging, run something like `curl https://<kuberAddres>:<kuberPort>/api -insecure --header "Authoriation: Bearer <tokenOfServiceAccount>`
 
 ### Fetch images from Private Repositories
+- Other than public images, we use our own images in the Pod. But how should we pass login credentials of that Private Repository?
+  - Run `kubectl create secret docker-registry <secretName> --docker-server=<repositoryUrl> --docker-username=<username> --docker-password=<password> --docker-email=<email>`
+  - Then pass the secret name in Pod definition like this:
+    ```yaml
+    kind: Pod
+    # ...
+    spec:
+      containers: #...
+      imagePullSecrets:
+        - name: <repositoryUrl>
+    ```
 
 # Additional Commands
 
