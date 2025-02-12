@@ -1486,6 +1486,31 @@ users:
       imagePullSecrets:
         - name: <repositoryUrl>
     ```
+### Security Contexts
+**Security In Docker**
+- For understanding security in k8s, we should know security in Docker.
+- Containers are not completely separated (like VMs). Containers and the host (host of out Docker) share the Kernel.
+  - Processes of Docker containers actually run in the host machine, but Docker seperates and isolates them from the Host machine and from other containers using namespaces.
+  - All of the processess inside Docker containers ran by `root` user of the host machine. Isn't it dangerous? No, because Docker limits the permissions of `root` user of the container, it can't perform any action in host machine by default, like restarting, opening and app, etc in Host machine
+  - If we want that Docker to use machine's non-root user to run the commands of container, we can specify it in run command like `docker run --user=<user_id.e.g:1000> ubuntu sleep 3000`
+  - If we want
+    - to grant additional privileges to the container to perform actions in host machine, add `--cap-add <privilegeName>` to Docker run command
+    - to remove some privileges, add `--cap-drop <privilegeName>`
+    - to grant all priviledges, add `--priviledged`
+
+**Back to Kubernetes**
+- We can define `runAsUser` (**security context user**) both in Pod level (inside Pod's `spec` section) or container level. If you define in both, Container level security context will override Pod level.
+- We can also adjust capabilities in container level. Example:
+  ```yaml
+  kind: Pod
+  #...
+  spec:
+    containers:
+      - #...
+        runAsUser: 1000 # a sample user_id
+        capabilities:
+          add: ["MAC_ADMIN"]
+  ```
 
 # Additional Commands
 
