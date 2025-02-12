@@ -1511,6 +1511,7 @@ users:
         capabilities:
           add: ["MAC_ADMIN"]
   ```
+- After making changes on `runAsUser`, you can verify your changes using `ps aux`
 
 # Additional Commands
 
