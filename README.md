@@ -1474,7 +1474,7 @@ users:
 - After service account created, you now can grant permissions to it using RBAC method using imperative command. Means first create a Role with proper privileges, then run `k create rolebinding <newRoleBindingName> --serviceaccount=<namespace>:<serviceAccountName> --role=<roleName>`
 - When we have token of service account in hand, our application can use that token to authorize. For manual debugging, run something like `curl https://<kuberAddres>:<kuberPort>/api -insecure --header "Authoriation: Bearer <tokenOfServiceAccount>`
 
-### Fetch images from Private Repositories
+## Fetch images from Private Repositories
 - Other than public images, we use our own images in the Pod. But how should we pass login credentials of that Private Repository?
   - Run `kubectl create secret docker-registry <secretName> --docker-server=<repositoryUrl> --docker-username=<username> --docker-password=<password> --docker-email=<email>`
   - Then pass the secret name in Pod definition like this:
@@ -1486,7 +1486,7 @@ users:
       imagePullSecrets:
         - name: <repositoryUrl>
     ```
-### Security Contexts
+## Security Contexts
 **Security In Docker**
 - For understanding security in k8s, we should know security in Docker.
 - Containers are not completely separated (like VMs). Containers and the host (host of out Docker) share the Kernel.
@@ -1507,10 +1507,41 @@ users:
   spec:
     containers:
       - #...
-        runAsUser: 1000 # a sample user_id
-        capabilities:
-          add: ["MAC_ADMIN"]
+        securityContext:
+          runAsUser: 1000 # a sample user_id
+          capabilities:
+            add: ["MAC_ADMIN"]
   ```
+- After making changes on `runAsUser`, verify it using `k exec <podname> -- whoami`
+
+## Network Policies
+- By default, all traffic between Pods are ALLOWED. But we can limit these traffics using Network Policies. To to this create a Network policy using such command:
+  ```yaml
+  apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    name: <newPolicyName>
+  spec:
+    podSelector:
+      matchLabels:
+        # Define matching labels of the Pod we want to limit access to. E.g:
+        name: db
+    policyTypes:
+      # Only network policies defined in 'policyTypes' will be effected.
+      #     Means, if we don't define 'Egress' in it, all Egress traffic will be allowed
+      #      even if have 'egress' section below.
+      - Ingress
+    ingress:
+      - from:
+          - podSelector:
+              matchLabels:
+                # Define mathing labels of the Pods that we want to have access to this Pod. E.g:
+                name: web-app
+        ports:
+          - protocol: TCP
+            port: 3306
+  ```
+- Note that not, Network Policies are been forced by the Network Solution implemented in our k8s. It the network Solution is not support Network Policy, our created Network Policies will be ignored. For example **Flannel** Network Solutions doesn't support Network Policies.
 
 # Additional Commands
 
