@@ -1561,6 +1561,7 @@ users:
     - But if 'podSelector' and 'namespaceSelector' both are part of one array item (one '-'), relation is **AND**. Means only traffic from Pods label `name=webapp` which is also are in namespace with labal `name=prod` will be allowed.
 
 - Note that not, Network Policies are been forced by the Network Solution implemented in our k8s. It the network Solution is not support Network Policy, our created Network Policies will be ignored. For example **Flannel** Network Solutions doesn't support Network Policies.
+- To see list of Network Policies run `kubectl get networkpolicies`
 
 # Additional Commands
 
@@ -1589,7 +1590,6 @@ You can get this list using `kubectl api-resources`
 - `netpol` : Network policies
 - `pv` : Persistent Volumes
 - `pvc` : PersistentVolumeClaims
-- `in` : Service Accounts
 - `no` : Nodes
 - `rc` : ReplicationController
 - `sec` : Secret
