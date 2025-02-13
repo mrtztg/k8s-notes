@@ -1612,6 +1612,19 @@ users:
     - Then build the code with `go build -o sample-controller .`
     - We can run it using `./sample-controller -kubeconfig=$HOME/.kube/config`, but the better way is containerise it as Docker, and deploy as a Pod to kubernetes
 
+- 2 additional concepts: 
+  - Operators: These are special programs that help manage complex applications on Kubernetes. They use CRDs (to define custom resources) and custom controllers (to watch and act on those resources). Think of an operator as a helper that watches over your application and fixes issues automatically.
+  - Operator Frameworks: These provide ready-made tools, libraries, and guidelines to create these helpers (operators) without starting from scratch. They simplify tasks like setting up the operator, testing it, and deploying it on Kubernetes.
+  - You can find tons of Operators from [Here](https://operatorhub.io/)
+
+- Note about the exam: Only learn CRD creation.
+
+# Storage
+**Understanding Storage in Docker**
+- We can 2 concept in Docker:
+  - Storage Drivers
+  - Volume Drivers Plugins
+
 # Additional Commands
  
 - Get all running components in groups: `kubectl get all`
