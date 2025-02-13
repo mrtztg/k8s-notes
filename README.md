@@ -1531,16 +1531,35 @@ users:
       #     Means, if we don't define 'Egress' in it, all Egress traffic will be allowed
       #      even if have 'egress' section below.
       - Ingress
+      - Egress
     ingress:
       - from:
           - podSelector:
               matchLabels:
                 # Define mathing labels of the Pods that we want to have access to this Pod. E.g:
                 name: web-app
+            namespaceSelector:
+              matchLabels:
+                name: prod
+          - ipBlock:
+              cidr: 192.168.2.10/32
         ports:
           - protocol: TCP
             port: 3306
+    egress:
+      - to:
+          - ipBlock: 
+              cidr: 192.168.2.10/32
+        ports:
+          protocol: TCP
+          port: 80
+
   ```
+  - Some notes about **Selector* section:
+    - All of the selectors (podSelector, namespaceSelector, ipBlock) are optional. We can use of them of several, based on our requirement.
+    - If 'podSelector' and 'namespaceSelector' both have '-' in the beginning, their relation will be **OR**, means NetworkPolicy will allow ingress traffic either if namespace of the Pod has `name=prod` label or the Pod itself has label `name=webapp`
+    - But if 'podSelector' and 'namespaceSelector' both are part of one array item (one '-'), relation is **AND**. Means only traffic from Pods label `name=webapp` which is also are in namespace with labal `name=prod` will be allowed.
+
 - Note that not, Network Policies are been forced by the Network Solution implemented in our k8s. It the network Solution is not support Network Policy, our created Network Policies will be ignored. For example **Flannel** Network Solutions doesn't support Network Policies.
 
 # Additional Commands
