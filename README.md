@@ -1561,9 +1561,59 @@ users:
     - But if 'podSelector' and 'namespaceSelector' both are part of one array item (one '-'), relation is **AND**. Means only traffic from Pods label `name=webapp` which is also are in namespace with labal `name=prod` will be allowed.
 
 - Note that not, Network Policies are been forced by the Network Solution implemented in our k8s. It the network Solution is not support Network Policy, our created Network Policies will be ignored. For example **Flannel** Network Solutions doesn't support Network Policies.
+- To see list of Network Policies run `kubectl get networkpolicies`
+
+## Custom Resources Definitions (CRD)
+- For each resource in k8s (like ReplicaSet, Pod, Deployment, Job, so on) there is a responsible Controller that watches the status of that object and maintaince it to be in expected status.
+  ![Pod Controller Golang](assets/images/70_pod_controller_go.jpg)
+  ![Controller for Resource](assets/images/69_controller_for_resource.png)
+- But we can create custom resources it controller for maintaining status of those resource. For example if want to create a Custom Resource for booking flights and a Custom controller for it:
+  - Create CRD like this (and then run `kubectl create -f my-flight-ticket-crd.yaml`):
+    ```yaml
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      name: flighttickets.flights.com # any name
+    spec:
+      scope: Namespaced # Whether we want to be NS scoped or Cluster scoped
+      # We'll use 'group' in 'apiVersion' the resource definition. E.g: 'apiVersion: flights.com/v1' here
+      group: flights.com
+      names:
+        # 'kind' will be exactly used in 'kind' of resource create definition
+        kind: FlightTicket
+        # signular and plural names will be used but kube api server. You can see them in `kubectl api-resources`
+        singular: flightticket
+        plural: flighttickets
+        shortnames: # aliases or shortnames of the resource
+          - ft
+      versions:
+        - name: v1 # We'll use version in 'apiVersion' of resource creattion def.
+          served: true
+          storage: true # If we have multiple versions, only one of them should have 'storage=true'
+      schema:
+        # We define all the parameters in 'spec' section of the resource creation def
+        openAPIV3Schema:
+          type: object
+          properties:
+            # These are hard data types, means the user will receive error if don't follow the data types.
+            spec:
+              from:
+                type: string
+              to:
+                type: string
+              number:
+                type: integer
+                minimum: 1
+                maximum: 10
+    ```
+  - But we also need a Controller for this CRD. Otherwise, the if we create a object from this CRD, the object won't do any action, neither will be checked for the status.
+  - You can create Custom Controllers with languages like Python, but the communication with Kubernetes apiserver will be challenging. The best way is to write it in Golang.
+    - Get sample controller from [here](https://github.com/kubernetes/sample-controller), develop the business logic inside (like booking flight).
+    - Then build the code with `go build -o sample-controller .`
+    - We can run it using `./sample-controller -kubeconfig=$HOME/.kube/config`, but the better way is containerise it as Docker, and deploy as a Pod to kubernetes
 
 # Additional Commands
-
+ 
 - Get all running components in groups: `kubectl get all`
 - To keep live watch on any get command in k8s, add --watch param. E.g `kubetctl get po --watch`
 - If we want to get count of resources (Pod here)
@@ -1586,7 +1636,6 @@ You can get this list using `kubectl api-resources`
 - `netpol` : Network policies
 - `pv` : Persistent Volumes
 - `pvc` : PersistentVolumeClaims
-- `in` : Service Accounts
 - `no` : Nodes
 - `rc` : ReplicationController
 - `sec` : Secret
@@ -1607,6 +1656,8 @@ You can get this list using `kubectl api-resources`
 - `-n=` : `--namespeces=`
 - `-A` : `--all-namespaces`
 
+# Useful k8s tools
+- [kubectx](https://github.com/ahmetb/kubectx) . Faster way to switch between contexts (clusters) and namespaces in kubectl
 
 # Exam Tips
 - ✅ During the exam, you will have access to :
