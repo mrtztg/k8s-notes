@@ -1610,6 +1610,8 @@ You can get this list using `kubectl api-resources`
 - `-n=` : `--namespeces=`
 - `-A` : `--all-namespaces`
 
+# Usefule k8s tools
+- [kubectx](https://github.com/ahmetb/kubectx) . Faster way to switch between contexts (clusters) and namespaces in kubectl
 
 # Exam Tips
 - ✅ During the exam, you will have access to :
