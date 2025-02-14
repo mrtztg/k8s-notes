@@ -1640,6 +1640,69 @@ We can 2 concept in Docker:
   - We saw that we can mount volumes to container. **Volume Drivers** are responsible to do this operation. There are many volume driver plugins like *Local*, *Azure File Storage*, *Convey*, *DigitalOcean Block Storage*, *RexRay*, etc. We can define the plugin on docker run command
   ![Define Volume Driver](assets/images/74_define_volume_driver.png)
 
+**Back to Kubernetes**
+- Over the time, K8s team added interfaces, then other developers can develop solutions for those areas without needing to work with k8s team:
+  - CRI (Container Runtime Interface). Container runtimes that follow this interface and can connect k8s using CRI: Docker, rkt, cri-o, ...
+  - CNI (Container Network Interface). Solutions that follow this interface and can extend networking features of k8s: weaveworks, flannel, cilium, ...
+  - CSI (Contaienr Storage Interface). Solutions that follow this interface and has been developed to work with different storage types of k8s: Amazon EBS, GlusterFS, DELL EMC, ...
+![k8s interfaces](assets/images/75_kubernetes_interfaces.png)
+
+- As we see in the image below, both Orchestration and Storage Plugins follow the RPC protocol interface. So, when we want to create a volume in k8s, it calls the `CreateVolume` procedure of the Storage Plugin (k8s doesn't need to know which Storage plugin it is)
+  ![CSI interface](assets/images/77_csi_interface.png)
+
+## Volumes
+- A simple definition for a Pod with a Volume mounted:
+  ```yaml
+  kind: Pod
+  # ...
+  spec:
+    containers:
+      - #...
+        command: ["/bin/sh", "-c"]
+        args: ["shuf -i 0-100 -n 1 >> /opt/number.out;"]
+        volumeMounts:
+          - mountPath: /opt
+            name: my-data-volume-in-container
+    volumes:
+      - name: my-data-volume
+        type: Directory
+        path: /path-in-host
+  ```
+- If we use different storage solutions, like AWS EBS:
+  ```yaml
+  #...
+    volumes:
+      - name: my-ebs-volume
+        awsElasticBlockStore:
+          volumeID: <volume-id>
+          fsType: ext4
+  ```
+
+### Persistent Volumes
+- While we can define volume in Pod definition itself, it's highly recommended to create PV (Persistent Volumes). Means, we create Volumes separately and attach them to any Pods we want. As an example for its benefits is that the k8s admin can create several PVs, and k8s users (like developer) can attach one of those PVs to their Pods, without need to deal with volume provisioning.
+  ![PV](assets/images/78_persisten_volume.png)
+- To create PVs:
+  ```yaml
+  apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    name: my-pv-vol1
+  spec:
+    accessModes:
+      # Available Options: 'ReadOnlyMany', 'ReadWriteOnce', 'ReadWriteMany'
+      - ReadWriteOnce
+    capacity:
+      storage: 1Gi
+    hostPath:
+      path: /tmp/data
+    
+    # OR we can replace with stoge plugins like AWS EBS like this:
+    awsElasticBlockStorage:
+      volumeID: <volume-id>
+      fsType: ext4
+  ```
+- To list PVs, run `kubectl get peristentvolume` or `k get pv`
+
 # Additional Commands
  
 - Get all running components in groups: `kubectl get all`
