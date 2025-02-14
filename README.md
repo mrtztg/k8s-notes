@@ -1621,9 +1621,24 @@ users:
 
 # Storage
 **Understanding Storage in Docker**
-- We can 2 concept in Docker:
-  - Storage Drivers
-  - Volume Drivers Plugins
+We can 2 concept in Docker:
+1. Storage Drivers
+  - When we create run `docker build` command, Docker will cache the steps (each like in Dockerfile is one step or one layer). For the next `docker build`s, Docker will used the cached steps of previous `build` until it see the first different step.
+    ![Docker layered architecture](assets/images/71_docker_layered_architecture.png)
+  - All of of *image layer* steps are read only. But any data that is created after `docker run` (Container layer) command can be modified. When we remove the container, all the data created in "container" layer will be destroyed.
+    ![layers read and write](assets/images/72_layers_read_write.png)
+  - What should we do if we want some of our data to resist when the Container got restarted? Create volumes:
+    - **Bind mounting** is mounting existing directory of host machine to the container. **Volume mounting** is mounting a volume (that is locate in /var/lib/docker/volumes of host machine). Storage Drivers are responsible to bind mounting and volume driver plugings are responsible to volume mounting.
+    - First create volume in host machine (/var/lib/docker/volumes) using `docker volume create <volumeName>`
+    - Attach volume to the container on creation `docker run -v <volumeName>:/var/lib/mysql mysql`
+    - We can even attach an exisiting directory in our machine (bind mounting). For this, use absolute path like `docker run -v /data/mysql:/var/lib/mysql mysql`
+    - A newer way of attaching volume is better and recommended: `docker run --mount -type=bind,source=<dirInHost>,target=<dirInContainer> mysql`
+    ![Create Docker Volumes](assets/images/73_create_volumes.png)
+  - Who is responsible to maintaining this mounting a directory (not volume) of host machine to the container? **Storage Drivers**. There are some storage drivers (like `AUFS`, `ZFS`, `BTRFS`, so on). Docker will the best one for us based on the OS we choose in image. But we can also define it manually.
+
+2. Volume Drivers
+  - We saw that we can mount volumes to container. **Volume Drivers** are responsible to do this operation. There are many volume driver plugins like *Local*, *Azure File Storage*, *Convey*, *DigitalOcean Block Storage*, *RexRay*, etc. We can define the plugin on docker run command
+  ![Define Volume Driver](assets/images/74_define_volume_driver.png)
 
 # Additional Commands
  
