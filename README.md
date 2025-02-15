@@ -1678,7 +1678,7 @@ We can 2 concept in Docker:
           fsType: ext4
   ```
 
-### Persistent Volumes
+### Persistent Volumes (PV)
 - While we can define volume in Pod definition itself, it's highly recommended to create PV (Persistent Volumes). Means, we create Volumes separately and attach them to any Pods we want. As an example for its benefits is that the k8s admin can create several PVs, and k8s users (like developer) can attach one of those PVs to their Pods, without need to deal with volume provisioning.
   ![PV](assets/images/78_persisten_volume.png)
 - To create PVs:
@@ -1702,6 +1702,54 @@ We can 2 concept in Docker:
       fsType: ext4
   ```
 - To list PVs, run `kubectl get peristentvolume` or `k get pv`
+
+### Persisten Volume Claims (PVC)
+- PV and PVCs are separated objects.
+  - Admin creates PVs, but it's not allocated to any Pod yet.
+  - The user (like developer or admin himself) creates a PVC.
+  - Based on PVC, k8s looks between all available PVs to find the maching properties (like Sufficient Capacity, Access Modes, Volume Modes, Storage Class, so on).
+    - If we know that there are several mathcing PVs with our PVC, we can filter using `selector` in PVC
+  - k8s bind the PVC to the chosen PVC
+- There is **One to One** relationship between PV and PVC. PV can be use by only one PVC at a time, even if there is available capacity in PV.
+- If there are no available mathing PV, then PVC will stay in Pending state until a proper PV made available.
+- Definition of PVC:
+  ```yaml
+  apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: my-pvc
+  spec:
+    # k8s will look for any PV with look for any storage with 'ReadWriteOnce' accessMode and storage capacity >500Mi
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 500Mi
+  ```
+- To see PVCs and bounded volumes: `kubectl get persistentvolumeclaim` or `k get pvc`
+- To delete a PVC, run `k delete pvc my-pvc`. But happens to the underlying PV? It has 3 strategy options (define them in `spec` of PV):
+  - `persistentVolumeReclaimPolicy: Retain`
+    - Default behaviour is to Retain the PV. Means prevents any other PVC to claim it.
+  - `persistentVolumeReclaimPolicy: Delete`
+    - Deletes the volume
+  - `persistentVolumeReclaimPolicy: Recycle` (Deparecated. Use dynamic volumes instead)
+    - The data in the volume will be scrubed (`rm -rf /thevolume/*`) before being available for getting claimed.
+- To specify PVC in Pod definitions:
+  ```yaml
+  kind: Pod
+  #...
+  spec:
+    containers:
+      - #...
+        volumeMounts:
+          - mountPath: "/var/www/html"
+            name: my-volume
+    volumes:
+      - name: my-volume
+        persistentVolumeClaim:
+          claimName: myclaim
+  ```
+
 
 # Additional Commands
  
