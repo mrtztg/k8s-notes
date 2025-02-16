@@ -1710,7 +1710,8 @@ We can 2 concept in Docker:
   - Based on PVC, k8s looks between all available PVs to find the maching properties (like Sufficient Capacity, Access Modes, Volume Modes, Storage Class, so on).
     - If we know that there are several mathcing PVs with our PVC, we can filter using `selector` in PVC
   - k8s bind the PVC to the chosen PVC
-- There is **One to One** relationship between PV and PVC. PV can be use by only one PVC at a time, even if there is available capacity in PV.
+- There is **One to One** relationship between PV and PVC. PV can be use by only one PVC at a time, even if there is available capacity in PV. 
+  - In other words, if capacity of claim was 50Mi and PV's capacity was 100Mi, the claim's capacity will be 100Mi if it claims the PV successfully.
 - If there are no available mathing PV, then PVC will stay in Pending state until a proper PV made available.
 - Definition of PVC:
   ```yaml
@@ -1749,7 +1750,7 @@ We can 2 concept in Docker:
         persistentVolumeClaim:
           claimName: myclaim
   ```
-- If a PVC mounted to a Pod, and we try to delete the PVC, it'll stay in terminating status until the Pod gets deleted.
+- If a PVC mounted to a Pod, and we try to delete the PVC, it'll stay in terminating status until the Pod is running. As soon as Pods get deleted, PVC will be deleted.
 
 # Additional Commands
  
