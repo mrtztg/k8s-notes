@@ -1749,7 +1749,7 @@ We can 2 concept in Docker:
         persistentVolumeClaim:
           claimName: myclaim
   ```
-
+- If a PVC mounted to a Pod, and we try to delete the PVC, it'll stay in terminating status until the Pod gets deleted.
 
 # Additional Commands
  
