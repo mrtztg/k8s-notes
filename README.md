@@ -1788,6 +1788,15 @@ We can 2 concept in Docker:
         # ...
     ```
 
+# Networking
+## Netwoking Basics
+- Our focus here is Linux machines.
+- How does 2 computers can reach each other? If we want both of them to be part of one local network:
+  - We connect them to a Switch, and the Switch creates a network contains 2 computers. Both of the systems should have Network Interface. To see the network interface, run `ip link`
+  - Now, to assume a network for each machine, run command to get IP address: `ip addr add 192.168.1.10/24 dev eth0`. Now, the computers can ping each other.
+    ![Switch Network](assets/images/79_switch_network.png)
+  
+
 # Additional Commands
  
 - Get all running components in groups: `kubectl get all`
