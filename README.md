@@ -1803,8 +1803,17 @@ We can 2 concept in Docker:
   - We can run `ip route add default via 192.168.2.1` on each machine. This command means for any IP that couldn't find in route list, use the router to reach out. This *internet connecting gateway route* can be different from the routes for connecting local machines.
   - So, if we have internet issue on our machine, this this routes and default routes are good place too start
 - How we can setup a Linux host as a Router?
-  - 
-  
+  - In all machines, we add route to reach out to the network via that host machine, like this: `ip route add 192.168.2.0/24 via 192.168.1.6`
+  - But because Linux doesn't packet forwarding from one network to the other, the machines still cannot reach each other (like Ping). To packet forwarding, we should run `echo 1 > /proc/sys/net/ipv4/ip_forward`. If you want this value persist on restarts, change the content inside `/etc/sysctl.conf` to `net.ipv4.ip_forward = 1`
+
+
+- Commands:
+  - `ip link` . List and modify interfaces on the host
+  - `ip addr` . To see IP addresses assigned to those interfaces
+  - `ip addr add 192.162.1.10/24 dev eth0` . To set IP addresses on the interfaces (doesn't persists on restart)
+  - `ip route` and `route` . To view route table
+  - `ip route add 192.168.1.0/24 via 192.168.2.1`. To add entries to route table
+  - `cat /proc/sys/net/ipv4/ip_forward` . To check whether IP forward is enabled
 
 # Additional Commands
  
