@@ -1795,6 +1795,15 @@ We can 2 concept in Docker:
   - We connect them to a Switch, and the Switch creates a network contains 2 computers. Both of the systems should have Network Interface. To see the network interface, run `ip link`
   - Now, to assume a network for each machine, run command to get IP address: `ip addr add 192.168.1.10/24 dev eth0`. Now, the computers can ping each other.
     ![Switch Network](assets/images/79_switch_network.png)
+- If the 2 machines aren't in the same network:
+  - We can connect them to each other using Router. The router is another device in the Network. We need to tell the machine that use Router to reach the machine in other Network using defining Gateways like this: `ip route add 192.168.2.0/24 via 192.168.1.1`. This has to be done in all the systems in both sides to be able to reach each other.
+  - To see existing route gateways: `route`
+    ![Route Gateways](assets/images/80_route_gateways.png)
+- If we want these systems to access to internet
+  - We can run `ip route add default via 192.168.2.1` on each machine. This command means for any IP that couldn't find in route list, use the router to reach out. This *internet connecting gateway route* can be different from the routes for connecting local machines.
+  - So, if we have internet issue on our machine, this this routes and default routes are good place too start
+- How we can setup a Linux host as a Router?
+  - 
   
 
 # Additional Commands
