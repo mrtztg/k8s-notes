@@ -1790,6 +1790,7 @@ We can 2 concept in Docker:
 
 # Networking
 ## Netwoking Basics
+### Routing
 - Our focus here is Linux machines.
 - How does 2 computers can reach each other? If we want both of them to be part of one local network:
   - We connect them to a Switch, and the Switch creates a network contains 2 computers. Both of the systems should have Network Interface. To see the network interface, run `ip link`
@@ -1805,6 +1806,15 @@ We can 2 concept in Docker:
 - How we can setup a Linux host as a Router?
   - In all machines, we add route to reach out to the network via that host machine, like this: `ip route add 192.168.2.0/24 via 192.168.1.6`
   - But because Linux doesn't packet forwarding from one network to the other, the machines still cannot reach each other (like Ping). To packet forwarding, we should run `echo 1 > /proc/sys/net/ipv4/ip_forward`. If you want this value persist on restarts, change the content inside `/etc/sysctl.conf` to `net.ipv4.ip_forward = 1`
+### DNS
+- Instead of using the IP of machine to reach to (like when want to ping `ping 192.168.1.11`), we can define alias for it with adding record to `/etc/hosts` file like `192.168.1.11    db`. Now we can use `ping db`. We can do this for public websites like `google.com` as well. This concept is called **Name Resolution**.
+  - But if we have a lot of machines in the network, managing huge list will be hard. We can ease it by introducing a DNS server which is responsible for Name Resolution. Just put the records in that DNS machine. Then tell the machines to use that DNS machine by add `nameserver {DNS_MACHINE_IP}` to `/etc/resolv.conf` file of all machines.
+  - Note that, the machine first looks for records in `etc/hosts` FIRST, then if not exists there, it will look in DNS server. But we can change this behaviour by modifying the file `/etc/nsswitch.conf`. By default it has `hosts: files dns`. But we can make it `hosts: dns files`
+  - Public well-know DNS servers have a huge list of all websites on the internet. So, by adding them, all domain names (like facebook.com, google.com, etc) will be accessible in our machine. One popular DNS resolver is `8.8.8.8`. We'll add it to `/etc/resolv.conf`: `nameserver 8.8.8.8`.
+  - Instead of putting public DNS resolver on each machine, we can also put it in our DNS resolver using `Forward All to 8.8.8.8`
+  ![DNS Public](assets/images/81_dns_public.png)
+- What if we regularly query to subdomains of our company domain, but want to use shorten way only? For example, instead of `ping db.mycompany.com`, we be able to just call `ping db`? Just add `search mycompany.com` in `resolv.conf` file. Even can define several records like `search mycompany.com dev.mycompany.com`
+- We can also use `nslookup` or `dig` tools instead of `ping` to find resolve domain, but they don't look at `etc/hosts` file's content
 
 
 - Commands:
