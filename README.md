@@ -1816,6 +1816,21 @@ We can 2 concept in Docker:
 - What if we regularly query to subdomains of our company domain, but want to use shorten way only? For example, instead of `ping db.mycompany.com`, we be able to just call `ping db`? Just add `search mycompany.com` in `resolv.conf` file. Even can define several records like `search mycompany.com dev.mycompany.com`
 - We can also use `nslookup` or `dig` tools instead of `ping` to find resolve domain, but they don't look at `etc/hosts` file's content
 
+### Network Namespaces
+- Namespaces is like rooms in a house. Parent of house can see processes of rooms, but children can see processes in their room only.
+- The host machine has a Network Interface, Routing Table and ARP Table to communicate with world outside (like local network). But we can also define virtual interfaces, Routing table and ARP table for the Namespace (or Container)
+  ![Namespace network interface](assets/images/82_namespace_network_interface.png)  
+  - First of all, we create Namespaces:
+    - `ip netns add red`, `ip netns add blue`. Then run `ip netns` to list
+    - How to run command inside NS? By appending `ip netns exec {Namespace}`. E.g `ip netns exec red ip link`.
+      - A short form for `ip netns exec {namespace} ip ...` is `ip -n red ...`. E.g `ip netns exec red ip link` -> `ip -n red link`
+  - Now if we run `ip netns exec red ip link` and `ip netns exec red arp` we won't see any network interfaces and ARP. Because namespace can't see host's ones.
+  - We can establish network between 2 namespaces using Pipe (virtual ethernet pair)
+    - Create the cable with 2 ends first using `ip link add my-veth-red type veth peer name my-veth-blue`
+    - Attach each end of cable to namespaces: `ip link set my-veth-red netns red` and `ip link set my-veth-blue netns blue`
+    - Assign IP within each namespace `ip -n red addr add 192.168.15.1 dev my-veth-red` and `ip -n blue addr add 192.168.15.2 dev my-veth-blue`
+    - Now bring up the interfaces: `ip -n red link my-veth-red up` and `ip -n blue link my-veth-blue up`
+
 
 - Commands:
   - `ip link` . List and modify interfaces on the host
