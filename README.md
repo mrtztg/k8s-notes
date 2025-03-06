@@ -1790,7 +1790,7 @@ We can 2 concept in Docker:
 
 # Networking
 ## Netwoking Basics
-### Routing
+### Routing Switch
 - Our focus here is Linux machines.
 - How does 2 computers can reach each other? If we want both of them to be part of one local network:
   - We connect them to a Switch, and the Switch creates a network contains 2 computers. Both of the systems should have Network Interface. To see the network interface, run `ip link`
@@ -1806,6 +1806,15 @@ We can 2 concept in Docker:
 - How we can setup a Linux host as a Router?
   - In all machines, we add route to reach out to the network via that host machine, like this: `ip route add 192.168.2.0/24 via 192.168.1.6`
   - But because Linux doesn't packet forwarding from one network to the other, the machines still cannot reach each other (like Ping). To packet forwarding, we should run `echo 1 > /proc/sys/net/ipv4/ip_forward`. If you want this value persist on restarts, change the content inside `/etc/sysctl.conf` to `net.ipv4.ip_forward = 1`
+
+- Commands:
+  - `ip link` . List and modify interfaces on the host
+  - `ip addr` . To see IP addresses assigned to those interfaces
+  - `ip addr add 192.162.1.10/24 dev eth0` . To set IP addresses on the interfaces (doesn't persists on restart)
+  - `ip route` and `route` . To view route table
+  - `ip route add 192.168.1.0/24 via 192.168.2.1`. To add entries to route table
+  - `cat /proc/sys/net/ipv4/ip_forward` . To check whether IP forward is enabled
+
 ### DNS
 - Instead of using the IP of machine to reach to (like when want to ping `ping 192.168.1.11`), we can define alias for it with adding record to `/etc/hosts` file like `192.168.1.11    db`. Now we can use `ping db`. We can do this for public websites like `google.com` as well. This concept is called **Name Resolution**.
   - But if we have a lot of machines in the network, managing huge list will be hard. We can ease it by introducing a DNS server which is responsible for Name Resolution. Just put the records in that DNS machine. Then tell the machines to use that DNS machine by add `nameserver {DNS_MACHINE_IP}` to `/etc/resolv.conf` file of all machines.
@@ -1830,15 +1839,21 @@ We can 2 concept in Docker:
     - Attach each end of cable to namespaces: `ip link set my-veth-red netns red` and `ip link set my-veth-blue netns blue`
     - Assign IP within each namespace `ip -n red addr add 192.168.15.1 dev my-veth-red` and `ip -n blue addr add 192.168.15.2 dev my-veth-blue`
     - Now bring up the interfaces: `ip -n red link my-veth-red up` and `ip -n blue link my-veth-blue up`
-
-
-- Commands:
-  - `ip link` . List and modify interfaces on the host
-  - `ip addr` . To see IP addresses assigned to those interfaces
-  - `ip addr add 192.162.1.10/24 dev eth0` . To set IP addresses on the interfaces (doesn't persists on restart)
-  - `ip route` and `route` . To view route table
-  - `ip route add 192.168.1.0/24 via 192.168.2.1`. To add entries to route table
-  - `cat /proc/sys/net/ipv4/ip_forward` . To check whether IP forward is enabled
+    - Now 2 namespaces can reach out to each other. Test it by ping each other: `ip netns exec red ping {ip_of_veth_blue}`
+    - You can see ARP of both NSes `ip netns exec red arp` and `ip netns exec blue arp`. Note that the host machine is not aware or these ARPs.
+    ![NS cable](assets/images/83_namespace_cables.png)
+  - What if we have many namespaces and want to establish connection between them? We should create a virtual switch. From available solutions, we're going to use *Linux Bridge* option
+    - Create the virsual network using `ip link add v-net-0 type bridge` and up it using `ip link set dev v-net-0 up`
+    - If we already created link and want to delete, use `ip -n red del my-veth-red`. It'll also delet other end of the pair
+    - Create cable to connect first namespace to the newly create bridge using `ip link add my-veth-red type veth peer name my-veth-red-br`
+    - Attach first side of cable to the NS using `ip link set my-veth-red netns red`
+    - Attach the other end to the bridge using `ip link set my-veth-red-br master v-net-0`
+    - Assign IP to NS using `ip -n red addr add 192.168.15.1 dev my-veth-red`
+    - Up the network of NS using `ip -n red link set my-veth-red up`
+    - Follow the last 5 steps for other Namespaces as well.
+      ![Namespaces bridge](assets/images/84_namespaces_bridge.png)
+    - Now all the namespaces can communicate with each other. But because the host and Namespaces are in different network, host machine can't reach the namespaces. How can we solve it, just with assigning an IP to the Bridge using `ip add addr 192.168.15.5/24 dev v-net-0`
+    - Note that this Namespaces are isolated from world outide. 
 
 # Additional Commands
  
