@@ -1865,6 +1865,13 @@ We can 2 concept in Docker:
       ![NS port forwarding](assets/images/87_namespaces_port_forwarding.png)
   - While testing the Network Namespaces, if you come across issues where you can't ping one namespace from the other, make sure you set the NETMASK while setting IP Address. ie: 192.168.1.10/24 `ip -n red addr add 192.168.1.10/24 dev veth-red`. Another thing to check is FirewallD/IP Table rules. Either add rules to IP Tables to allow traffic from one namespace to  another. Or disable IP Tables all together (Only in a learning environment).
 
+## CNI (Container Network Interface)
+- Since all namespace networking solutions should follow the similar steps (as we below in the picture), CNI standard has been introduced. So, if both the Network plugin and the Runtime (like kubernets) will follow it, Runtime can use the plugin as its network solution.
+  ![network solutions](assets/images/88_network_solutions.png)
+- Any CNI solution should be able to create a bridge using command `bridge add <cid> <namespace>`
+- Some of container runtimes that implement CNI: weaveworks, flannel, cilium, vmware NGX.
+  - But Docker has its own implementation which is called `CNM` (Container Network Model). So, we can't create Docker container using CNI-implemented solutions `docker run --network=cni-bridge`. So, how k8s will use network solutions to create bridge in Docker containers? k8s create Docker container without network `docker run --network none <image>` behind the scenes and then runs network solution using `bridge add <container-id> <namespace>`.
+
 ### Docker Networking
 - Docker has several networking options:
   - None (`docker run --network none nginx`): Means the container won't get attach to any network.
