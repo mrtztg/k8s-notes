@@ -1814,6 +1814,8 @@ We can 2 concept in Docker:
   - `ip route` and `route` . To view route table
   - `ip route add 192.168.1.0/24 via 192.168.2.1`. To add entries to route table
   - `cat /proc/sys/net/ipv4/ip_forward` . To check whether IP forward is enabled
+  - `arp` . To list ARPs
+  - `netstat -plnt`
 
 ### DNS
 - Instead of using the IP of machine to reach to (like when want to ping `ping 192.168.1.11`), we can define alias for it with adding record to `/etc/hosts` file like `192.168.1.11    db`. Now we can use `ping db`. We can do this for public websites like `google.com` as well. This concept is called **Name Resolution**.
@@ -1870,7 +1872,12 @@ We can 2 concept in Docker:
   ![network solutions](assets/images/88_network_solutions.png)
 - Any CNI solution should be able to create a bridge using command `bridge add <cid> <namespace>`
 - Some of container runtimes that implement CNI: weaveworks, flannel, cilium, vmware NGX.
-  - But Docker has its own implementation which is called `CNM` (Container Network Model). So, we can't create Docker container using CNI-implemented solutions `docker run --network=cni-bridge`. So, how k8s will use network solutions to create bridge in Docker containers? k8s create Docker container without network `docker run --network none <image>` behind the scenes and then runs network solution using `bridge add <container-id> <namespace>`.
+  - But Docker has its own implementation which is called `CNM` (Container Network Model). So, we can't create Docker container using CNI-implemented solutions `docker run --network=cni-bridge`. So, how k8s will use network solutions to create bridge in Docker containers? k8s create Docker container without network `docker run --network none <image>` behind the scenes and then invoke the configured CNI plugin to take care of NS configurations `bridge add <container-id> <namespace>`.
+
+## k8s Cluster Networking
+- The following pictures shows ports of different k8s components. So, keep them in mind when you want to allow them in firewall or Cloud Security Group configurations:
+  ![Cluster Ports](assets/images/89_cluster_ports.png)
+  - Note that if we have several master nodes, we should allow ports in all of them. In addition, we should allow port `2380` in all master nodes, because of ETCD
 
 ### Docker Networking
 - Docker has several networking options:
