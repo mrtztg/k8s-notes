@@ -1824,6 +1824,7 @@ We can 2 concept in Docker:
   ![DNS Public](assets/images/81_dns_public.png)
 - What if we regularly query to subdomains of our company domain, but want to use shorten way only? For example, instead of `ping db.mycompany.com`, we be able to just call `ping db`? Just add `search mycompany.com` in `resolv.conf` file. Even can define several records like `search mycompany.com dev.mycompany.com`
 - We can also use `nslookup` or `dig` tools instead of `ping` to find resolve domain, but they don't look at `etc/hosts` file's content
+- There are different solutions to setup DNS server. One good option is CoreDNS. After installation, you can either import records from /etc/hosts file or other ways.
 
 ### Network Namespaces
 - Namespaces is like rooms in a house. Parent of house can see processes of rooms, but children can see processes in their room only.
@@ -1862,6 +1863,17 @@ We can 2 concept in Docker:
       ![NS internet access](assets/images/86_namespaces_internet_access.png)
     - If we want the namespaces be accessible from outside (like if our webapp is in namespace), a good way is port forwarding: `iptables -t nat -a PREROUTING --dport 80 --to-destination 192.168.15.2:80 -j DNAT`
       ![NS port forwarding](assets/images/87_namespaces_port_forwarding.png)
+  - While testing the Network Namespaces, if you come across issues where you can't ping one namespace from the other, make sure you set the NETMASK while setting IP Address. ie: 192.168.1.10/24 `ip -n red addr add 192.168.1.10/24 dev veth-red`. Another thing to check is FirewallD/IP Table rules. Either add rules to IP Tables to allow traffic from one namespace to  another. Or disable IP Tables all together (Only in a learning environment).
+
+### Docker Networking
+- Docker has several networking options:
+  - None (`docker run --network none nginx`): Means the container won't get attach to any network.
+  - Host (`docker run --network host nginx`): Means the containers will be attach to the network of host. Means if the appliation of container runs on port 80, it'll use port 80 of host. So, another application can't use this port anymore
+  - Bridge (`docker run --network bridge nginx`): Means the container will use the Bridge network that Docker created for its containers. Docker will use network swithing method we discussed above to establish connection between containers and also with the world outside.
+    - In this option, if we want application (container) be accessible from the outside of host machine, we use port forwarding `docker run -p {hostPort}:{containerPort} nginx`. Docker use iptables NAT PREROUTING behind the scenes.
+- We can see Network interfaces of Docker using `docker network ls`. 
+- We can see namespace of containers using `docker inspect {containerId}`, section `networkSetting`
+- For each container, Docker creates a namespace. And create cables between bridge and namespaces
 
 # Additional Commands
  
