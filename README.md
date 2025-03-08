@@ -1854,6 +1854,14 @@ We can 2 concept in Docker:
       ![Namespaces bridge](assets/images/84_namespaces_bridge.png)
     - Now all the namespaces can communicate with each other. But because the host and Namespaces are in different network, host machine can't reach the namespaces. How can we solve it, just with assigning an IP to the Bridge using `ip add addr 192.168.15.5/24 dev v-net-0`
     - Note that this Namespaces are isolated from world outide. 
+  - The namespaces that we created in the last stage do not have access to the world outside, like the other computers in the local network. To give this access:
+    - Add a route to each namespace to reach to IP range through host machine: `ip netns exec blue ip route add 192.168.1.0/24 via {IP_OF_HOST_WITHIN_NAMESPACES_NETWORK}`
+    - Enable NAT functionality in host machine using: `iptables -t nat -A POSTROUTING -s 192.168.15.0/24 -j MASQUERADE`. Actually, the computers in the local network will think the request comes from the host mahine, not the namespaces inside it. Because iptables will replace FROM of all packets to host machine's IP.
+      ![Namespaces' gateway](assets/images/85_namespaces_gateway.png)
+    - To enable internet access for namespaces, just add default route to each namespace `ip netns exec blue ip route default via {IP_OF_HOST_WITHIN_NAMESPACES_NETWORK}`
+      ![NS internet access](assets/images/86_namespaces_internet_access.png)
+    - If we want the namespaces be accessible from outside (like if our webapp is in namespace), a good way is port forwarding: `iptables -t nat -a PREROUTING --dport 80 --to-destination 192.168.15.2:80 -j DNAT`
+      ![NS port forwarding](assets/images/87_namespaces_port_forwarding.png)
 
 # Additional Commands
  
