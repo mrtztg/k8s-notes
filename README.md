@@ -1811,11 +1811,11 @@ We can 2 concept in Docker:
   - `ip link` . List and modify interfaces on the host
   - `ip addr` . To see IP addresses assigned to those interfaces
   - `ip addr add 192.162.1.10/24 dev eth0` . To set IP addresses on the interfaces (doesn't persists on restart)
-  - `ip route` and `route` . To view route table
+  - `ip route` and `route` . To view route table. E.g if we want to see which of the routes will be used for PING 8.8.8.8, check if this IP is in the records of `ip route`, then that route will be used. Otherwise, *default* route in the list will be used.
   - `ip route add 192.168.1.0/24 via 192.168.2.1`. To add entries to route table
   - `cat /proc/sys/net/ipv4/ip_forward` . To check whether IP forward is enabled
   - `arp` . To list ARPs
-  - `netstat -plnt` or `netstat -anp | grep {serviceName:e.g etcd}` . To see what ports the services established.
+  - `netstat -pln | grep -i {serviceName:e.g etcd}` . To see what ports the service listening on. E.g if we want to see which port **kube-scheduler** is listening to, run `netstat -pln | grep -i scheduler`. If we want to see even established connection (not only currently listening) run `netstat -apn ...`. Take care of state column (e.g: **ESTABLISHED**, **LISTEN**, etc). LISTEN means is already listening. Establish means packet sent, not listening. Also, differntiate *Local Address* and *Foreign Address*. Local is the IP:PORT that service was/is on, the foreign is the IP:PORT that the packet sent or listening (or any state) to.
 
 ### DNS
 - Instead of using the IP of machine to reach to (like when want to ping `ping 192.168.1.11`), we can define alias for it with adding record to `/etc/hosts` file like `192.168.1.11    db`. Now we can use `ping db`. We can do this for public websites like `google.com` as well. This concept is called **Name Resolution**.
@@ -1878,7 +1878,11 @@ We can 2 concept in Docker:
 - The following pictures shows ports of different k8s components. So, keep them in mind when you want to allow them in firewall or Cloud Security Group configurations:
   ![Cluster Ports](assets/images/89_cluster_ports.png)
   - Note that if we have several master nodes, we should allow ports in all of them. In addition, we should allow port `2380` in all master nodes, because of ETCD
-- To see Internal IP of a k8s Node, run `k get no {nodeName} -o wide`
+- To see Internal IP of a k8s Node, run `k get no {nodeName} -o wide` or find Internal IP in `k describe node {nodeName}`
+- To find out which Network Interface the k8s Node is using, run `ip addr` or `ip link`. Then look for the interface that has the **Internal IP** of Node.
+- To find out MAC address of interface used for Node, look in `ip addr` of the interface used by Node.. If we want to see MAC address of a Node out of the current Node, first ssh to the Node, then run `ip addr` and look for the interface that has IP that we saw in `k get no -o wide`
+- If we want to find out which network interface/bridge has been created by containerd or other container runtime of k8s, run `ip addr show type bridge`. 
+- To find out which route (IP) will be used to communicate 
 
 ### Docker Networking
 - Docker has several networking options:
