@@ -1815,7 +1815,7 @@ We can 2 concept in Docker:
   - `ip route add 192.168.1.0/24 via 192.168.2.1`. To add entries to route table
   - `cat /proc/sys/net/ipv4/ip_forward` . To check whether IP forward is enabled
   - `arp` . To list ARPs
-  - `netstat -plnt`
+  - `netstat -plnt` or `netstat -anp | grep {serviceName:e.g etcd}` . To see what ports the services established.
 
 ### DNS
 - Instead of using the IP of machine to reach to (like when want to ping `ping 192.168.1.11`), we can define alias for it with adding record to `/etc/hosts` file like `192.168.1.11    db`. Now we can use `ping db`. We can do this for public websites like `google.com` as well. This concept is called **Name Resolution**.
@@ -1878,6 +1878,7 @@ We can 2 concept in Docker:
 - The following pictures shows ports of different k8s components. So, keep them in mind when you want to allow them in firewall or Cloud Security Group configurations:
   ![Cluster Ports](assets/images/89_cluster_ports.png)
   - Note that if we have several master nodes, we should allow ports in all of them. In addition, we should allow port `2380` in all master nodes, because of ETCD
+- To see Internal IP of a k8s Node, run `k get no {nodeName} -o wide`
 
 ### Docker Networking
 - Docker has several networking options:
