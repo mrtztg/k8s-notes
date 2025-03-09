@@ -1873,6 +1873,18 @@ We can 2 concept in Docker:
 - Any CNI solution should be able to create a bridge using command `bridge add <cid> <namespace>`
 - Some of container runtimes that implement CNI: weaveworks, flannel, cilium, vmware NGX.
   - But Docker has its own implementation which is called `CNM` (Container Network Model). So, we can't create Docker container using CNI-implemented solutions `docker run --network=cni-bridge`. So, how k8s will use network solutions to create bridge in Docker containers? k8s create Docker container without network `docker run --network none <image>` behind the scenes and then invoke the configured CNI plugin to take care of NS configurations `bridge add <container-id> <namespace>`.
+- Available CNI configuration files in k8s will be located in `opt/cni/bin`. To see which CNI our k8s will use and how, head over to `etc/cni/net.d` directory. You can see files like `10-bridge.conflist`. k8s will pick the first file alphabetically. 
+  - To see what binary files will be run by kubelet after container and its associated namespaces, check the `type` of plugins inside the file in `/etc/cni/net.d`. E.g in the following example, flannel will run first then portmap:
+  ![CNI binary order](assets/images/92_cni_binary_order.png)
+- If the exam asked you to install a CNI plugin, go to k8s documents > "Installing Addons". Then naviage to the plugin page. The installation maybe so easy, but have a quick look on the whole page. There maybe some gotchas and required configurations. For example, for Weaveworks, there is "Things for watch out for", read that accurately.
+
+### CNI Weave
+- One example of CNI implementation is **Weaveworks**.
+- Weave deploys an agant (service) on each Node. Those agents are aware of each other through a small network. So, whenever a Pod wants to send a packet to a Pod in another Node, the agent on the source Node knows where the target Pod exactly sits (which Node, etc). So it packs the data, sends to the agent in the target Node. Then the agent there unpacks the data, and delivers to the target Pod.
+  - Actually, Weave creates a Bridge network on each Node.
+- To install Weaveworks, make sure Kubernetes cluster and its components is installed. Then run the following command: `kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml`
+  - Weavework will use DaemonSets to make sure each Node has a Pod of Weave agent
+  - If you installed k8s using Kubeadm, you can see Weave Peers (on each node) using `kube get pods -n kube-system`
 
 ## k8s Cluster Networking
 - The following pictures shows ports of different k8s components. So, keep them in mind when you want to allow them in firewall or Cloud Security Group configurations:
