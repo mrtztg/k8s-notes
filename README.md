@@ -1894,6 +1894,14 @@ We can 2 concept in Docker:
 - We can see namespace of containers using `docker inspect {containerId}`, section `networkSetting`
 - For each container, Docker creates a namespace. And create cables between bridge and namespaces
 
+### Pod Networking
+- K8s doesn't have built-in networking solution. We can create our own CNI implementation script or use solutions like Flannel, etc. If we want to create our own CNI implementation, it'll be the steps we discussed in previous chapters (shown again in the image below).
+  ![Pod Networking](assets/images/90_pod_networking.png)
+  - Also, our Nodes should be part of one network to be able to communicate with each other. For this purpose, we can add ip routes. But because it'll be complicated when Pods and Nodes get increased, we should add routes in Router (that all Nodes are using)
+  ![Nodes router gateway](assets/images/91_nodes_router_gateway.png)
+  - In addition to ADD command, our script should implement DEL command as well.
+  - CNIs out there (like Flannel) handles all these steps
+
 # Additional Commands
  
 - Get all running components in groups: `kubectl get all`
