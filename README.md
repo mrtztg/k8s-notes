@@ -1877,6 +1877,12 @@ We can 2 concept in Docker:
   - To see what binary files will be run by kubelet after container and its associated namespaces, check the `type` of plugins inside the file in `/etc/cni/net.d`. E.g in the following example, flannel will run first then portmap:
   ![CNI binary order](assets/images/92_cni_binary_order.png)
 - If the exam asked you to install a CNI plugin, go to k8s documents > "Installing Addons". Then naviage to the plugin page. The installation maybe so easy, but have a quick look on the whole page. There maybe some gotchas and required configurations. For example, for Weaveworks, there is "Things for watch out for", read that accurately.
+- How our custom implemented CNI manages IP allocation to the Pods? We can store IPs in a file. But CNI comes with 2 builtin plugins to outsource IP allocation to it: `DHCP` and `host-local`. We can define it in `etc/cni/net.d/..` file. Look for `ipam` section. You can set type, subnets and routes. Have a look on Weave section below.
+- If we want to know what gateway will be used if a Pod scheduled on a Node:
+  - Find out IP range with looking on `PodCIDR` of Node inspect.
+  - Then connect to Node using SSH if we're not in the Node.
+  - Then run `ip route` and see what's the gateway of that IP range.
+  - Note: There is also an easier way to finou out the gateway. Just create a Pod on that Node. Then run `kubectl exec {PodName} -- ip route`
 
 ### CNI Weave
 - One example of CNI implementation is **Weaveworks**.
@@ -1885,6 +1891,8 @@ We can 2 concept in Docker:
 - To install Weaveworks, make sure Kubernetes cluster and its components is installed. Then run the following command: `kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml`
   - Weavework will use DaemonSets to make sure each Node has a Pod of Weave agent
   - If you installed k8s using Kubeadm, you can see Weave Peers (on each node) using `kube get pods -n kube-system`
+- Weave IP allocation is like this. It allocates CIDR `10.32.0.0/12` to the whole cluster, and gives specific portion of this big IP range to Nodes. These ranges are configurable during Weave installation.
+- To find out which network interface Weave is using to allocate IPs, inspect weave Weave Pod, and look for IPALLOC_RANGE section. Then check `ip addr` and see which network interface is that IP Range.
 
 ## k8s Cluster Networking
 - The following pictures shows ports of different k8s components. So, keep them in mind when you want to allow them in firewall or Cloud Security Group configurations:
