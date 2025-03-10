@@ -325,7 +325,7 @@ spec:
 
     - NodePort range is `30_000` to `32_767`
 
-  2. **CluesterIP**: Create virtual IP inside cluster to enable communication between Pods like set of front-end servers with back-end servers
+  2. **CluesterIP**: Create virtual IP inside cluster that gives a cluster-wide IP to the Pod(s). This enables communication between Pods like set of front-end servers with back-end servers.
       ![ClusterIP Service](assets/images/27_clusterip.png)
   3. **LoadBalancer**: Enables loadBalancer in the supported cloud providers (like AWS, GCP, Azure). For example we pub AWS Application Load Balancer in front and Kubernetes service (with type=LoadBalancer) will do the rest of configuration in a way that the traffic will be received through the domain that is set to AWS ALB, and load will be balanced.
     ![Load Balancer Serivce](assets/images/28_loadbalancer_service.png)
@@ -1904,7 +1904,7 @@ We can 2 concept in Docker:
 - If we want to find out which network interface/bridge has been created by containerd or other container runtime of k8s, run `ip addr show type bridge`. 
 - To find out which route (IP) will be used to communicate 
 
-### Docker Networking
+## Docker Networking
 - Docker has several networking options:
   - None (`docker run --network none nginx`): Means the container won't get attach to any network.
   - Host (`docker run --network host nginx`): Means the containers will be attach to the network of host. Means if the appliation of container runs on port 80, it'll use port 80 of host. So, another application can't use this port anymore
@@ -1914,13 +1914,16 @@ We can 2 concept in Docker:
 - We can see namespace of containers using `docker inspect {containerId}`, section `networkSetting`
 - For each container, Docker creates a namespace. And create cables between bridge and namespaces
 
-### Pod Networking
+## Pod Networking
 - K8s doesn't have built-in networking solution. We can create our own CNI implementation script or use solutions like Flannel, etc. If we want to create our own CNI implementation, it'll be the steps we discussed in previous chapters (shown again in the image below).
   ![Pod Networking](assets/images/90_pod_networking.png)
   - Also, our Nodes should be part of one network to be able to communicate with each other. For this purpose, we can add ip routes. But because it'll be complicated when Pods and Nodes get increased, we should add routes in Router (that all Nodes are using)
   ![Nodes router gateway](assets/images/91_nodes_router_gateway.png)
   - In addition to ADD command, our script should implement DEL command as well.
   - CNIs out there (like Flannel) handles all these steps
+
+## Service Networking
+- Services are not real objects. They're cluster-wide (not Node bound) virsual objects. Consider that Service is not a real object in cluster, k8s can't create namespace or assign IP to the object. In reality, for each service, k8s creates a forwarding rule 
 
 # Additional Commands
  
