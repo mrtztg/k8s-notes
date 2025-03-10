@@ -1935,7 +1935,13 @@ We can 2 concept in Docker:
   - We can see the rules create by kube-proxy by running `iptables -L -t nat | grep [serviceName]` or in kube-proxy logs:
     ![Service in iptables](assets/images/95_service_in_iptables.png)
     
-
+## DNS in Kubernetes
+- Kubernetes has a built-in DNS server. Whenever we create a service, k8s DNS service creates a record that maps *service name* to *service IP*. So, within the service's namespace, any Pod can reach to this service using service name (like `http://db-service`).
+  - But the Pods in another namespace (and even Pods in the same namespace) can reach to this using `<serviceName>.<namespace>`
+  - One step further, k8s groups all services in `svc` subdomain. So we can reach service using `<serviceName>.<namespace>.svc` e.g `http://db-service.appsNs.svc`
+  - Finally all services and Pod are grouped in a a root domain called `cluster.local`. So we can reach services using `<serviceName>.<namespace>.svc.cluster.local`
+  - The similar pattern applies for Pods. But Pods' DNS names will be a copy of their IP address, by `.` characters replaced by `-`
+    ![k8s dns](assets/images/96_k8s_dns.png)
 
 # Additional Commands
  
