@@ -1703,7 +1703,7 @@ We can 2 concept in Docker:
   ```
 - To list PVs, run `kubectl get peristentvolume` or `k get pv`
 
-### Persisten Volume Claims (PVC)
+### Persistent Volume Claims (PVC)
 - PV and PVCs are separated objects.
   - Admin creates PVs, but it's not allocated to any Pod yet.
   - The user (like developer or admin himself) creates a PVC.
@@ -1939,9 +1939,16 @@ We can 2 concept in Docker:
 - Kubernetes has a built-in DNS server. Whenever we create a service, k8s DNS service creates a record that maps *service name* to *service IP*. So, within the service's namespace, any Pod can reach to this service using service name (like `http://db-service`).
   - But the Pods in another namespace (and even Pods in the same namespace) can reach to this using `<serviceName>.<namespace>`
   - One step further, k8s groups all services in `svc` subdomain. So we can reach service using `<serviceName>.<namespace>.svc` e.g `http://db-service.appsNs.svc`
-  - Finally all services and Pod are grouped in a a root domain called `cluster.local`. So we can reach services using `<serviceName>.<namespace>.svc.cluster.local`
-  - The similar pattern applies for Pods. But Pods' DNS names will be a copy of their IP address, by `.` characters replaced by `-`
+  - Finally all services and Pod are grouped in a TLD domain which is `cluster.local` by default. So we can reach services using `<serviceName>.<namespace>.svc.<kubernetesTLD>`
+  - By default, k8s creates DNS records only for services. But we can enable Pod DNS record creation as well. Then, the similar pattern applies for Pods. But Pods' DNS names will be a copy of their IP address, by `.` characters replaced by `-`. But note that Pods are only reachable with full FQDN (`<podNS>.<namespace>.pod.<kubernetesTLD>`)
     ![k8s dns](assets/images/96_k8s_dns.png)
+### CoreDNS in k8s
+- Kubernetes uses CoreDNS as a DNS server. CoreDNS is deployed as a Pod Replicaset in kubernetes. We can find its configuration in `/etc/coredns/Corefile` (which is pass in configmap of CoreDNS). The orange keywords are the plugins CoreDNS will use. `cluster.local` is kubernetes TLD used in DNS resolver. The row `pods` also enables DNS record creation for Pods. `proxy` line defines where the resolv.conf will be stored.
+  ![CoreDNS config](assets/images/97_coredns_config.png)
+- CoreDNS will also have a service, and the server will have ClusterIP. All the Pods will have `nameserver <coredns-cluserip>` in their `/etc/resolv.conf`. But how Pods will know what's the IP of CoreDNS? `kubelet` will store it. You can have a look on `/var/lib/kubelet/config.yaml` file, `clusterDNS` row.
+- If you want to know what's the IP of a DNS record (which added by CoreDNS), run `host <serviceName>`. You can see full fqdn like this:
+  `my-service.default.svc.cluster.local has address 10.108.1.14`.
+  - But how CoreDNS can finds the full path just with the `my-service`? It added `search default.svc.cluster.local svc.cluster.local ...` in its resolv.conf (refer to DNS section). But not that it has search entries only for services, not Pods. so `<podName>` or `<podName>.<namespace>`, so on won't be reachable. 
 
 # Additional Commands
  
