@@ -1826,7 +1826,7 @@ We can 2 concept in Docker:
   ![DNS Public](assets/images/81_dns_public.png)
 - What if we regularly query to subdomains of our company domain, but want to use shorten way only? For example, instead of `ping db.mycompany.com`, we be able to just call `ping db`? Just add `search mycompany.com` in `resolv.conf` file. Even can define several records like `search mycompany.com dev.mycompany.com`
 - We can also use `nslookup` or `dig` tools instead of `ping` to find resolve domain, but they don't look at `etc/hosts` file's content
-- There are different solutions to setup DNS server. One good option is CoreDNS. After installation, you can either import records from /etc/hosts file or other ways.
+- There are different solutions to setup DNS server. One good option is `CoreDNS`. After installation, you can either import records from /etc/hosts file or other ways.
 
 ### Network Namespaces
 - Namespaces is like rooms in a house. Parent of house can see processes of rooms, but children can see processes in their room only.
@@ -1923,7 +1923,19 @@ We can 2 concept in Docker:
   - CNIs out there (like Flannel) handles all these steps
 
 ## Service Networking
-- Services are not real objects. They're cluster-wide (not Node bound) virsual objects. Consider that Service is not a real object in cluster, k8s can't create namespace or assign IP to the object. In reality, for each service, k8s creates a forwarding rule 
+- We're taking about ClusterIP service here.
+- Services are not real objects. They're cluster-wide (not Node bound) virsual objects. Consider that Service is not a real object in cluster, k8s can't create namespace or assign IP to the object. In reality, for each service, `kube-proxy` creates a IP+Port forwarding rule in all Nodes.
+  ![Kubeproxy services rule](assets/images/93_kubeproxy_services_rule.png)
+  - kube-proxy can does this forwarding using different ways, and we can change it:
+    - `kube-proxy --proxy-mode [userspace | iptables | ipvs]`. (default value is iptables).
+    - To find out which is being used now, see kube-proxy logs `kubectl logs -n kube-system <kube-proxy-pod>`
+  - What IP range kube-proxy pick service IP from. IP-range been set in kube-api-server parameters `kube-api-server --service-cluster-ip-range ipNet (default: 10.0.0.0/24)`. We can see this IP Range using `ps aux | grep kube-api-server`.
+  - Note: This IP Range shouldn't overlap the Pod-CIDR range been defined in Pod Networking setup. Means there shouldn't be any chance that IP of a Pod and IP of a Service be the same.
+    ![kube-api-server service ip range](assets/images/94_kube-api-server-service-ip-range.png)
+  - We can see the rules create by kube-proxy by running `iptables -L -t nat | grep [serviceName]` or in kube-proxy logs:
+    ![Service in iptables](assets/images/95_service_in_iptables.png)
+    
+
 
 # Additional Commands
  
