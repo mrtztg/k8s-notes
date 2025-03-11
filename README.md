@@ -1945,10 +1945,10 @@ We can 2 concept in Docker:
 ### CoreDNS in k8s
 - Kubernetes uses CoreDNS as a DNS server. CoreDNS is deployed as a Pod Replicaset in kubernetes. We can find its configuration in `/etc/coredns/Corefile` (which is pass in configmap of CoreDNS). The orange keywords are the plugins CoreDNS will use. `cluster.local` is kubernetes TLD used in DNS resolver. The row `pods` also enables DNS record creation for Pods. `proxy` line defines where the resolv.conf will be stored.
   ![CoreDNS config](assets/images/97_coredns_config.png)
-- CoreDNS will also have a service, and the server will have ClusterIP. All the Pods will have `nameserver <coredns-cluserip>` in their `/etc/resolv.conf`. But how Pods will know what's the IP of CoreDNS? `kubelet` will store it. You can have a look on `/var/lib/kubelet/config.yaml` file, `clusterDNS` row.
+- CoreDNS will also have a k8s ClusterIP service to be reachable by k8s components. All the Pods will have `nameserver <coredns-cluserip>` in their `/etc/resolv.conf`. But how Pods will know what's the IP of CoreDNS? `kubelet` will store it. You can have a look on `/var/lib/kubelet/config.yaml` file, `clusterDNS` row.
 - If you want to know what's the IP of a DNS record (which added by CoreDNS), run `host <serviceName>`. You can see full fqdn like this:
   `my-service.default.svc.cluster.local has address 10.108.1.14`.
-  - But how CoreDNS can finds the full path just with the `my-service`? It added `search default.svc.cluster.local svc.cluster.local ...` in its resolv.conf (refer to DNS section). But not that it has search entries only for services, not Pods. so `<podName>` or `<podName>.<namespace>`, so on won't be reachable. 
+  - But how CoreDNS can finds the full path just with the `my-service`? It added `search default.svc.cluster.local svc.cluster.local ...` to resolv.conf file of Pods (refer to DNS section). But note that it has search entries only for services, not Pods. so `<podName>` or `<podName>.<namespace>`, so on won't be reachable. 
 
 # Additional Commands
  
