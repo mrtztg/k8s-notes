@@ -1950,6 +1950,78 @@ We can 2 concept in Docker:
   `my-service.default.svc.cluster.local has address 10.108.1.14`.
   - But how CoreDNS can finds the full path just with the `my-service`? It added `search default.svc.cluster.local svc.cluster.local ...` to resolv.conf file of Pods (refer to DNS section). But note that it has search entries only for services, not Pods. so `<podName>` or `<podName>.<namespace>`, so on won't be reachable. 
 
+## Ingress
+- Let's imagine we want to setup seveal services on cloud k8s, for our website like `domain.com/video` which points to the Video service in our k8s, and `domain.com/stream` which points Steam service. Because the 2 applicatins are different with different ports, we need to create 2 Load Balancers in the Cloud provider. Also, in which level we'll define which application to use based on the URL pattern (means /video points to Video service, and so on)? In Cloud Load Balancer level, a Reverse proxy like Nginx? In a middleware application? Also, who'll handle SSL of the domain and subdomains.
+  ![Setup without Ingress](assets/images/98_setup_without_ingress.png)
+- Ingress is a solution for such setups. We'll use k8s itself to manage this setup, and the configuration YAMLs will sit alongside our other k8s config. Using Ingress, we'll expose only single accessible URL to the outside (like to Cloud Provider) and all routings will be handled by k8s, plus SSL.
+- Without Ingress, one option for handling such challenge would be using a Reverse Proxy like Nginx, Traefik or HAProxy. With k8s, we do the similar. We deploy one of the support solutions (like Nginx Ingress Controller), then configure Ingress resources (YAML config). Don't remember to install an Ingress solution first, otherwise, configuration won't work.
+- Here, we decide to use Nginx-Controller as the solution. To install Nginx-Controller, use k8s Deployment and a Service to expose it. Also, because Ingress intelligently monitor k8s cluster to ingress resources and configure Nginx if something changed, we should give required permissions to it using ServiceAccount:
+  ```yaml
+  -- ConfigMap
+  apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: nginx-configuration
+  -- Deployment
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: nginx-ingress-controller
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: nginx-ingress
+    template:
+      metadata:
+        labels:
+          name: nginx-ingress
+      spec:
+        containers:
+          - name: nginx-ingress-controller
+            image: quay.io.kubernetes-ingress-controller/nginx-ingress-controller:0.21.0
+        args:
+          - /nginx-ingress-controller # Because Nginx runnable is in in this address of the container, that should be run.
+          - --configmap=$(POD_NAMESPACE)/nginx-configuration # We'll store Nginx configurations in ConfigMap, like certificates locations, etc
+        env: # Nginx need these 2 to be able to read configuration data from without the Pod
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        ports:
+          - name: http
+            containerPort: 80
+          - name: https
+            containerPort: 443
+  ---------------
+  -- NodePort Service
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: nginx-ingress
+  spec:
+    type: NodePort
+    ports:
+      - port: 80
+        targetPort: 80
+        protocol: TCP
+        name: http
+      - port: 443
+        targetPort: 443
+        protocol: TCP
+        name: https
+    selector:
+      name: nginx-ingress
+  ---------------
+  -- ServiceAccount
+  apiVersion: 
+  ```
+
+
 # Additional Commands
  
 - Get all running components in groups: `kubectl get all`
