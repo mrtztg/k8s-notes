@@ -1955,7 +1955,7 @@ We can 2 concept in Docker:
   ![Setup without Ingress](assets/images/98_setup_without_ingress.png)
 - Ingress is a solution for such setups. We'll use k8s itself to manage this setup, and the configuration YAMLs will sit alongside our other k8s config. Using Ingress, we'll expose only single accessible URL to the outside (like to Cloud Provider) and all routings will be handled by k8s, plus SSL.
 - Without Ingress, one option for handling such challenge would be using a Reverse Proxy like Nginx, Traefik or HAProxy. With k8s, we do the similar. We deploy one of the support solutions (like Nginx Ingress Controller), then configure Ingress resources (YAML config). Don't remember to install an Ingress solution first, otherwise, configuration won't work.
-- Here, we decide to use Nginx-Controller as the solution. To install Nginx-Controller, use k8s Deployment and a Service to expose it. Also, because Ingress intelligently monitor k8s cluster to ingress resources and configure Nginx if something changed, we should give required permissions to it using ServiceAccount:
+- Here, we decide to use Nginx-Controller as the solution. To install Nginx-Controller, use k8s Deployment and a Service to expose it. Also, because Ingress intelligently monitor k8s cluster to ingress resources and configure Nginx if something changed, we should give required permissions to it using ServiceAccount (Role, ClusterRole, RoleBindings):
   ```yaml
   -- ConfigMap
   apiVersion: v1
@@ -2018,8 +2018,72 @@ We can 2 concept in Docker:
       name: nginx-ingress
   ---------------
   -- ServiceAccount
-  apiVersion: 
+  apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: nginx-ingress-serviceaccount
   ```
+  ![Nginx deployment](assets/images/99_nginx_deployment.png)
+
+- Now, the Ingress Controller is up. We can create Ingress configurations. A simple Ingress config which forwards all traffic to one service will be like this:
+  ```yaml
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: ingress-wear
+  spec:
+    backend:
+      service:
+        name: wear-service
+        port:
+          number: 80
+  ```
+- But if we want to have forward based on subdomain and path, the config will be like below. It'll
+  - Redirect all traffic in `example.com/wear/*` to `wear` service
+  - Redirect all traffic in `auth.example.com/*` to `auth` service
+  - Redirect all traffic in `video.example.com/streming/*` to `video-streaming` service.
+  - Redirect all traffic in `viddo.example.com/live/*` to `video-live` service
+  ```yaml
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: ingress-website
+  spec:
+    rules:
+    - http:
+        paths:
+        - path: /wear
+          backend:
+            service:
+              name: wear-service
+              port:
+                number: 80
+    - host: auth.example.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: auth-service
+                port:
+                  number: 80
+    - host: video.example.com
+      http:
+        paths:
+          - path: /streaming
+            backend:
+              service:
+                name: video-streaming-service
+                port:
+                  number: 80
+          - path: /live
+            backend:
+              service:
+                name: video-live-service
+                port:
+                  number: 80
+  ```
+
+
 
 
 # Additional Commands
@@ -2033,6 +2097,7 @@ We can 2 concept in Docker:
 
 [Kubernetes Quick Reference](https://kubernetes.io/docs/reference/kubectl/quick-reference/)
 [kubectl useful commands](https://faun.pub/kubectl-useful-commands-f5f47c0773f)
+[Kubectl command](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands)
 
 # References
 
