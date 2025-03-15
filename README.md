@@ -2082,8 +2082,33 @@ We can 2 concept in Docker:
                 port:
                   number: 80
   ```
-
-
+- To create Ingress using imperative command: `k create ingress <ingress-name> --rule="host/path=service:port"`. E.g:
+  - `k create ingress ingress-website --rule="/wear=wear-service:80" --rule="auth.example.com/=auth-service:80" --rule="video.example.com/streaming=video-streaming-service:80 ...`
+- Different Ingress controllers have different options. Nginx Ingress Controller also has many. One of them is Rewrite option, which behaves like a serach and replace function on URL. The example below is an Ingress config, but `wear/` prefix from any URL path with be removed. E.g:
+- `rewrite.bar.com/wear` -> `rewrite.bar.com/`
+- `rewrite.bar.com/wear/` -> `rewrite.bar.com/`
+- `rewrite.bar.com/wear/new` -> `rewrite.bar.com/new`
+  ```yaml
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: rewrite
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+  spec:
+    rules:
+    - host: rewrite.bar.com
+      http:
+        paths:
+          - path: /wear(/|$)(.*)
+            backend:
+              service:
+                name: wear-service
+                port:
+                  number: 80
+  ```
+          
 
 
 # Additional Commands
