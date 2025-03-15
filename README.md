@@ -2162,9 +2162,13 @@ We can 2 concept in Docker:
       - name: example-service
         port: 8080
   ```
-- List of supported Routes in Gateway API:
-  
-
+- List of supported Routes in Gateway API (no need to remember)
+  ![Supported Gateway Routes](assets/images/101_supported_Gateway_Routes.png)
+- The following examples are the Gateway API version of Ingress using Ingress-Controllers (you see how much structured and explicit they are)
+  ![Ingress To Gateway example 1](assets/images/102_ingress_to_gateway_example1.png)
+  ![Ingress To Gateway example 2](assets/images/102_ingress_to_gateway_example2.png)
+  ![Ingress To Gateway example 3](assets/images/102_ingress_to_gateway_example3.png)
+- Most of the Solutions (like Nginx, Amazon EKS, Nginx, Traefik, etc) are already followed Gateway Controller implementation, and we can use them as Gateway API controller.
 
 
 # Additional Commands
