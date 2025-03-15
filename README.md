@@ -2108,7 +2108,63 @@ We can 2 concept in Docker:
                 port:
                   number: 80
   ```
-          
+- If `Default backend:  <default>` is set in Ingress configuration, any URL **Host** that doesn't match the Ingress rules will be forwarded to Default service. (but mismatching URL path will be not found) To find out what's default service, inspect Ingress Controller Deployment: `k get deploy -n <ingress-namespace> ingress-nginx-controller -o yaml | grep backend-service`
+- Note: The port of Service that we'll forward from Ingress can be seen in Service inspect, `Port` property, not TargetPort.
+- Note: Ingress resource comes under the namespace scoped. So, don't forget to create it in the proper namespace.
+- Troubleshoot: If even after correct Ingress rules defining, the URL is not accessible in the browser, check Pod logs. You may get idea what's the issue, like we need to define Rewrite rule as well.
+
+## Gateway API
+- Gateway API in official L4 and L7 routing k8s project that represents Ingress, Load Balancing and Service Mesh APIs.
+- Acually, Ingress Controllers have limitations like:
+  - Doesn't support multi-tenancy, Namespace isolation, No RBAC for features, No resource isolation
+  - No native support for TCP/UDP routing, Traffic splitting/weighting, Header manipulation, Authentication, Redirects, Rewriting, Rate limiting, Middleware, Websocket support, Custom error pages, Session affinity, CORS. Means we should define *Annotations*, which will make our Ingress config very locked in that specific Controller (like locked to Nginx Controller). Gateway API solved this problem.
+- In Gateway APIs, there are 3 personnas to manage. Means infra admin creates GatewayClass, Cluster Operator creates Gateway, And developers create like TLSRoute, HTTPRoute and etc.
+  - ![Gateway API Personna](assets/images/100_gateway_api_personnas.png)
+- So, first we should create GatewayClass:
+  ```yaml
+  apiVersion: gateway.networking.k8s.io/v1
+  kind: GatewayClass
+  metadata:
+    name: example-class
+  spec:
+    controllerName: example.com/gateway-controller
+  ```
+  - Then we create Gateway:
+  ```yaml
+  apiVersion: gateway.networking.k8s.io/v1
+  kind: Gateway
+  metadata:
+    name: example-gateway
+  spec:
+    gatewayClassName: example-class
+    listeneres:
+    - name: http
+      protocol: HTTP
+      port: 80
+  ```
+  - Now we create HTTPRoute (or other Route types) rule (which forwards all traffic in `www.example.com/login` to `example-service` service)
+  ```yaml
+  apiVersion: gateway.networking.k8s.io/v1
+  kind: HTTPRoute
+  metadata:
+    name: example-httproute
+  spec:
+    parentRefs:
+    - name: example-gateway
+    hostnames:
+    - "www.example.com"
+    rules:
+    - matches:
+      - path:
+          type: PathPrefix
+          value: /login
+      backendRefs:
+      - name: example-service
+        port: 8080
+  ```
+- List of supported Routes in Gateway API:
+  
+
 
 
 # Additional Commands
