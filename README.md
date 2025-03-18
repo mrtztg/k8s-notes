@@ -2120,7 +2120,7 @@ We can 2 concept in Docker:
   - No native support for TCP/UDP routing, Traffic splitting/weighting, Header manipulation, Authentication, Redirects, Rewriting, Rate limiting, Middleware, Websocket support, Custom error pages, Session affinity, CORS. Means we should define *Annotations*, which will make our Ingress config very locked in that specific Controller (like locked to Nginx Controller). Gateway API solved this problem.
 - In Gateway APIs, there are 3 personnas to manage. Means infra admin creates GatewayClass, Cluster Operator creates Gateway, And developers create like TLSRoute, HTTPRoute and etc.
   - ![Gateway API Personna](assets/images/100_gateway_api_personnas.png)
-- So, first we should create GatewayClass:
+- GatewayClass how Gateway implemented by Controller. So, first we should create GatewayClass:
   ```yaml
   apiVersion: gateway.networking.k8s.io/v1
   kind: GatewayClass
@@ -2148,9 +2148,11 @@ We can 2 concept in Docker:
   kind: HTTPRoute
   metadata:
     name: example-httproute
+    namespace: sample-namespace 
   spec:
     parentRefs:
     - name: example-gateway
+      namespace: sample2namespace # this namespace should be the namespace of Gateway
     hostnames:
     - "www.example.com"
     rules:
@@ -2162,13 +2164,28 @@ We can 2 concept in Docker:
       - name: example-service
         port: 8080
   ```
-- List of supported Routes in Gateway API (no need to remember)
+- List of supported Routes in Gateway API
   ![Supported Gateway Routes](assets/images/101_supported_Gateway_Routes.png)
 - The following examples are the Gateway API version of Ingress using Ingress-Controllers (you see how much structured and explicit they are)
   ![Ingress To Gateway example 1](assets/images/102_ingress_to_gateway_example1.png)
   ![Ingress To Gateway example 2](assets/images/102_ingress_to_gateway_example2.png)
   ![Ingress To Gateway example 3](assets/images/102_ingress_to_gateway_example3.png)
 - Most of the Solutions (like Nginx, Amazon EKS, Nginx, Traefik, etc) are already followed Gateway Controller implementation, and we can use them as Gateway API controller.
+
+# Install Kubernetes
+## Using Kubeadm
+- To install, we'll walk through the following steps:
+  ![kubeadm steps](assets/images/103_kubadm_steps.png)
+
+
+# Helm
+- Kubernetes by itself doesn't care what each resource belogs to, means k8s doesn't know this PVC belogs to that application, etc.
+- HELM is a **package manager** that is aware of belongings. It knows what package each resource belongs to (like this DB Volume belogs to our Website-Wordpress package). Using HELM, we use a single command to setup our entire app even if it needs hundreds of objects. We can also define some variables/values in setup time (like db_url of a Pod, email password of a Email application, size of a PersistentVolume, etc)
+  - `helm install my-wordpress`: To install our app using a configuration file.
+  - `helm upgrade my-wordress`: To upgrade our app. Helm will know which objects need to be changed.
+  - `helm rollback my-wordpress`: Because HELM keeps track of all changes, we can rollback using 
+  - `helm uninstall my-wordpress`: To remove all objects of the app.
+  - helm
 
 
 # Additional Commands
