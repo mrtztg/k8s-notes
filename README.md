@@ -2181,10 +2181,7 @@ We can 2 concept in Docker:
 # Helm
 - Kubernetes by itself doesn't care what each resource belogs to, means k8s doesn't know this PVC belogs to that application, etc.
 - HELM is a **package manager** that is aware of belongings. It knows what package each resource belongs to (like this DB Volume belogs to our Website-Wordpress package). Using HELM, we use a single command to setup our entire app even if it needs hundreds of objects. We can also define some variables/values in setup time (like db_url of a Pod, email password of a Email application, size of a PersistentVolume, etc)
-  - `helm install wordpress`: To install our app using a configuration file.
-  - `helm upgrade wordress`: To upgrade our app. Helm will know which objects need to be changed.
-  - `helm rollback wordpress`: Because HELM keeps track of all changes, we can rollback using 
-  - `helm uninstall wordpress`: To remove all objects of the app.
+  
   - `helm --help`: To get all information about helm command, even the environment variables like `$HELM_DEBUG`, so on.
   - helm
 - Helm version 3 has some big advantages over version 2:
@@ -2193,10 +2190,23 @@ We can 2 concept in Docker:
 ## Helm Components
 ![Helm components](assets/images/104_helm_components.png)
 ### Helm CLI
-- Which is command line to interact with Helm
+- Which is command line to interact with Helm. `helm --help` has very useful information about its commands. We even can pass --help for subcommands like `helm repo -h` or `helm repo update -h`
+- We can use charts in public repository usin `helm search hub <chartName>`. But if we want other repo than the artifacthub to pull from, should use `helm search repo <repoName> <chartName>`.
+  - If the repo is not exist in our local repo list, we can add like this `helm repo add bitnami https://charts.bitnami.com/bitnami`
+- `helm list`: To list all **Releases**
+- `helm install <desiredReleaseNameOnLocal> <chartName>`: To install our app using a configuration file or chart on public repo.
+  - `helm install <desiredName> <chartName> --version <version>` to install from specific version of chart
+- `helm upgrade <releaseName> <chartName>`: To upgrade our app. Helm will know which objects need to be changed.
+  - For some Helm charts (like Wordpress), simple upgrade may produce an error. The error may ask us to pass additional parameters on upgrade like DbPassword, etc.
+- `helm rollback <releaseName> <revisionNumber>`: Because HELM keeps track of all changes, we can rollback using. Note that Helm doesn't go back to previous Revision on Rollback. It creates new Revision with the exactly same configuration of previous Revision.
+  - Rollback of Helm only affect on configuraitons. Data liks Database Data, Files in PersistentVolume, so on which are not configuration, won't be restored, just the Pod of that DB will be restored.
+- `helm uninstall <releaseName>`: To remove all objects of the app.
+- `helm repo list`: To list all added repos. `repo` command has other commands like `index`, `remove` and `update` as well.
+- `helm history <releaseName>`. To see all revision (changes) history of a Release
+
 ### Helm Charts
 - A collections of files that contains all instructions of all the objects needs to be created in the cluster.
-- Like Docker Hub, there are public repositories for Helm Charts, like Appscode, Truecharts, Bitnami, etc. But all of them list their charts on `ArtifactHub.io` website. So you can find alls of the public charts in this site.
+- Like Docker Hub, there are public repositories for Helm Charts, like Appscode, Truecharts, Bitnami, etc. But all of them list their charts on `ArtifactHUB.io` website. So you can find alls of the public charts in this site.
 - The following picture is the content of a simple Helm chart. In helm charts, we usually only modify values files, because the actual definition files have the placeholders of values. Also, `Chart` file keeps information about Helm chart itself. 
   - `apiVerion: v2` is for HelmCharts v3 (which is very recent version of Helm). But if the version is not defined or is `v1`, it refers for Helm v2. Some fields like *dependencies* and *type* introduced in Helm3. So, if we use Helm2, these new fields of Helm3 will be ignored
   - `appVersion` is the version of the app inside. It's just for informational purpose
@@ -2205,6 +2215,13 @@ We can 2 concept in Docker:
   - `type`. `application` is for most of our charts, `library` is for utility charts that we want to use in the other Helm charts
   - `keywords` and `maintainers` are informational fields mostly for public repos.
   - ![Simple Helmchart](assets/images/105_helm_chart_helloworld.png)
+** Modify Helm chart**
+- For modifying default values of a chart (like changing BlogName of a Wordpress site) that will be downloaded from a repo, we have multiple ways:
+  1. Define in the parameters using `--set` like this:
+    ![Modify Helm chart values using set](assets/images/106_helm_modify_values_set.png)
+  2. Pass all variables that we want to override in a file:
+    ![Modify Helm chart values using set](assets/images/106_helm_modify_values_file.png)
+  3. Pull the chart using command like `helm pull bitnami/wordpress` and untar it or pull&untar using `helm pull --untar bitnami/wordpress`. You then will see all the files of the chart in current directory. Now open and edit any files you want, and then create the release using `helm install <desiredReleaseName> ./wordpress`
 ### Helm Releases
 - Whenever a charts applies, a **Release** is created, which is a single instance of the application. Each upgrade/deployment/change of the application creates a Revision in the **Release**
 - We can install multiple **Release** from a specific Helm chart. With having this feature, from a Wordpress Helm chart, we can create Releases like *news-blog-prod*, *news-blog-dev*, *knowledge-blog*, etc.
