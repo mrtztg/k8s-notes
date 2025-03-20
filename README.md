@@ -2181,12 +2181,35 @@ We can 2 concept in Docker:
 # Helm
 - Kubernetes by itself doesn't care what each resource belogs to, means k8s doesn't know this PVC belogs to that application, etc.
 - HELM is a **package manager** that is aware of belongings. It knows what package each resource belongs to (like this DB Volume belogs to our Website-Wordpress package). Using HELM, we use a single command to setup our entire app even if it needs hundreds of objects. We can also define some variables/values in setup time (like db_url of a Pod, email password of a Email application, size of a PersistentVolume, etc)
-  - `helm install my-wordpress`: To install our app using a configuration file.
-  - `helm upgrade my-wordress`: To upgrade our app. Helm will know which objects need to be changed.
-  - `helm rollback my-wordpress`: Because HELM keeps track of all changes, we can rollback using 
-  - `helm uninstall my-wordpress`: To remove all objects of the app.
+  - `helm install wordpress`: To install our app using a configuration file.
+  - `helm upgrade wordress`: To upgrade our app. Helm will know which objects need to be changed.
+  - `helm rollback wordpress`: Because HELM keeps track of all changes, we can rollback using 
+  - `helm uninstall wordpress`: To remove all objects of the app.
+  - `helm --help`: To get all information about helm command, even the environment variables like `$HELM_DEBUG`, so on.
   - helm
-
+- Helm version 3 has some big advantages over version 2:
+  - I uses kubernets RBAC over Tiller solution, which makes it more secure
+  - It uses "3-way Strategic Merge Patch. Helm’s 3-way strategic merge patch compares three versions of a resource—the original deployed version, the current live state, and the new desired version—to figure out the exact changes needed. This way, it updates the resource without overwriting any manual or external changes.
+## Helm Components
+![Helm components](assets/images/104_helm_components.png)
+### Helm CLI
+- Which is command line to interact with Helm
+### Helm Charts
+- A collections of files that contains all instructions of all the objects needs to be created in the cluster.
+- Like Docker Hub, there are public repositories for Helm Charts, like Appscode, Truecharts, Bitnami, etc. But all of them list their charts on `ArtifactHub.io` website. So you can find alls of the public charts in this site.
+- The following picture is the content of a simple Helm chart. In helm charts, we usually only modify values files, because the actual definition files have the placeholders of values. Also, `Chart` file keeps information about Helm chart itself. 
+  - `apiVerion: v2` is for HelmCharts v3 (which is very recent version of Helm). But if the version is not defined or is `v1`, it refers for Helm v2. Some fields like *dependencies* and *type* introduced in Helm3. So, if we use Helm2, these new fields of Helm3 will be ignored
+  - `appVersion` is the version of the app inside. It's just for informational purpose
+  - `version` is the version of this Helm chart
+  - `name` and `description` of metadatas of this Helm chart
+  - `type`. `application` is for most of our charts, `library` is for utility charts that we want to use in the other Helm charts
+  - `keywords` and `maintainers` are informational fields mostly for public repos.
+  - ![Simple Helmchart](assets/images/105_helm_chart_helloworld.png)
+### Helm Releases
+- Whenever a charts applies, a **Release** is created, which is a single instance of the application. Each upgrade/deployment/change of the application creates a Revision in the **Release**
+- We can install multiple **Release** from a specific Helm chart. With having this feature, from a Wordpress Helm chart, we can create Releases like *news-blog-prod*, *news-blog-dev*, *knowledge-blog*, etc.
+### Helm metadata
+- Helm stores all its metadata including configurations, releases that installed, charts been uses, etc inside a Secret in k8s cluster itself, instead of our local machine. So, everyone in our team can access the configurations
 
 # Additional Commands
  
