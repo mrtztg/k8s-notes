@@ -2228,6 +2228,16 @@ We can 2 concept in Docker:
 ### Helm metadata
 - Helm stores all its metadata including configurations, releases that installed, charts been uses, etc inside a Secret in k8s cluster itself, instead of our local machine. So, everyone in our team can access the configurations
 
+# Kustomize
+- Let's imagine we want to different our application in 3 environments (like Dev, Stg, Prod). All definition files will be the same in all the copies, except a few fields (like Replica number). The traditional way is copying our definitions, and modify them. Which is not scalable and very bug mistake-prone, like what if we forgot to copy Service file to one of the environments.
+- **Kustomize** will solve this issue for us. With Kustomize, we define Base definitions and Overlays.
+  - ![Kustomize](assets/images/107_kustomize_base.png)
+- File structure of Kustomize will be like this:
+  - ![Kustomize file structure](assets/images/108_kustomize_file_structure.png)
+- **Kustomize** gets installed by **kubectl**, but it may not be the latest version.
+### Kustomize vs Helm
+- Helm can also address the issue tha Kustomize tries to solve. But it's a bit more complex, because it uses Golang template format, instead of YAML replacements. Helm is a Package manager and has lots of more features, but Kustomize is an easy solution just for customisation.
+
 # Additional Commands
  
 - Get all running components in groups: `kubectl get all`
