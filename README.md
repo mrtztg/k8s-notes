@@ -2237,6 +2237,27 @@ We can 2 concept in Docker:
 - **Kustomize** gets installed by **kubectl**, but it may not be the latest version.
 ### Kustomize vs Helm
 - Helm can also address the issue tha Kustomize tries to solve. But it's a bit more complex, because it uses Golang template format, instead of YAML replacements. Helm is a Package manager and has lots of more features, but Kustomize is an easy solution just for customisation.
+## Kustomize usage
+- We should create a file with exactly `kustomization.yaml` name in the same directory of our other definition files. The file should be like this:
+  ```yaml
+  -- 'apiVersion' and 'kind' are optional fields. But recommended to prevent version conflicts
+  apiVersion: kustomize.config.k8s.io/v1beta1
+  kind: Kustomization
+
+  resources: -- We should add all files we want to include in this kustomization
+    - my-redis-deploy.yaml
+    - my-redis-service.yaml
+  
+  commonLabels: -- content inside 'commonLabels' will replace content inside 'labels' inside the resource definitions
+    company: example.com
+    app: my-pretty-app
+  ```
+- When our kustomize directory is ready, we can run `kustomize build <directoryPath>`. But it'll print the result int terminal. To create resources with the result, we should run either:
+  - `kustomize build <directoryPath> | kubectl create -f -`
+  - or `kubectl apply -k <directoryPath>`
+- To delete the resources created by kustomize, we can run `kustomize build <dir> | k delete -f -` or `k delete -k <dir>`
+- If our resources starting grows, instead of having all of them in the main Kustomize directory, we create create sub-direcotories based on app scopes or app kind or etc, and pass their path in kustomize file like `- db/my-db-deploy.yaml`. But even a cleaner way is to create customize file in each directory, and import all those directories in the main kustomize:
+  ![Kustomize directories](assets/images/109_kustomize_directories.png)
 
 # Additional Commands
  
