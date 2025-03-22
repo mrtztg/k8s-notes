@@ -2251,13 +2251,33 @@ We can 2 concept in Docker:
   commonLabels: -- content inside 'commonLabels' will replace content inside 'labels' inside the resource definitions
     company: example.com
     app: my-pretty-app
+
+  -- namespace field is optional. It replaces/sets namespace for all definitions
+  namespace: lab
+
+  -- namePrefix and nameSuffix are also optional. The add prefix or suffix to the name of all resources
+  namePrefix: MyCompany-
+  nameSuffic: -dev
+
+  -- commonAnnotations is optional and sets annotations to the resources.
+  commonAnnotations:
+    branch: master
+  
+  -- The following property, will look for "Image name" (not container name) and will replace name and/or tag.
+  We can define both newTag and newName, or only one of them.
+  images:
+  - name: nginx
+    newName: haproxy
+    newTag: "2.5"
   ```
+  - Notes: If we want to apply a transformation (like commonLabels, namespace, namePrefix, etc) to specific resources, one way is to put all those target resources in separated sub-directory and define kustomize in the sub-dir.
 - When our kustomize directory is ready, we can run `kustomize build <directoryPath>`. But it'll print the result int terminal. To create resources with the result, we should run either:
   - `kustomize build <directoryPath> | kubectl create -f -`
   - or `kubectl apply -k <directoryPath>`
 - To delete the resources created by kustomize, we can run `kustomize build <dir> | k delete -f -` or `k delete -k <dir>`
 - If our resources starting grows, instead of having all of them in the main Kustomize directory, we create create sub-direcotories based on app scopes or app kind or etc, and pass their path in kustomize file like `- db/my-db-deploy.yaml`. But even a cleaner way is to create customize file in each directory, and import all those directories in the main kustomize:
   ![Kustomize directories](assets/images/109_kustomize_directories.png)
+- Try to use `kustomize create --autodetect --recursive` to auto detect definition files for ease.
 
 # Additional Commands
  
