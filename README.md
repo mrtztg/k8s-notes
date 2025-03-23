@@ -2238,6 +2238,15 @@ We can 2 concept in Docker:
 ### Kustomize vs Helm
 - Helm can also address the issue tha Kustomize tries to solve. But it's a bit more complex, because it uses Golang template format, instead of YAML replacements. Helm is a Package manager and has lots of more features, but Kustomize is an easy solution just for customisation.
 ## Kustomize usage
+- When our kustomize directory is ready, we can run `kustomize build <directoryPath>`. But it'll print the result int terminal. To create resources with the result, we should run either:
+  - `kustomize build <directoryPath> | kubectl create -f -`
+  - or `kubectl apply -k <directoryPath>`
+- To delete the resources created by kustomize, we can run `kustomize build <dir> | k delete -f -` or `k delete -k <dir>`
+- If our resources starting grows, instead of having all of them in the main Kustomize directory, we create create sub-direcotories based on app scopes or app kind or etc, and pass their path in kustomize file like `- db/my-db-deploy.yaml`. But even a cleaner way is to create customize file in each directory, and import all those directories in the main kustomize:
+  ![Kustomize directories](assets/images/109_kustomize_directories.png)
+- Try to use `kustomize create --autodetect --recursive` to auto detect definition files for ease.
+
+### Transformers
 - We should create a file with exactly `kustomization.yaml` name in the same directory of our other definition files. The file should be like this:
   ```yaml
   -- 'apiVersion' and 'kind' are optional fields. But recommended to prevent version conflicts
@@ -2271,13 +2280,38 @@ We can 2 concept in Docker:
     newTag: "2.5"
   ```
   - Notes: If we want to apply a transformation (like commonLabels, namespace, namePrefix, etc) to specific resources, one way is to put all those target resources in separated sub-directory and define kustomize in the sub-dir.
-- When our kustomize directory is ready, we can run `kustomize build <directoryPath>`. But it'll print the result int terminal. To create resources with the result, we should run either:
-  - `kustomize build <directoryPath> | kubectl create -f -`
-  - or `kubectl apply -k <directoryPath>`
-- To delete the resources created by kustomize, we can run `kustomize build <dir> | k delete -f -` or `k delete -k <dir>`
-- If our resources starting grows, instead of having all of them in the main Kustomize directory, we create create sub-direcotories based on app scopes or app kind or etc, and pass their path in kustomize file like `- db/my-db-deploy.yaml`. But even a cleaner way is to create customize file in each directory, and import all those directories in the main kustomize:
-  ![Kustomize directories](assets/images/109_kustomize_directories.png)
-- Try to use `kustomize create --autodetect --recursive` to auto detect definition files for ease.
+
+### Patches
+- Other that transformer properties in Kustomize, there are **Pathes**. Pathes will have 3 section:
+  - Operation Type: add/remove/replace
+  - Target:
+    - Kind, Version/Group, Name, Namespace, labelSelector, AnnotationSelector
+  - Value (if type is add or replace)
+- The following example is a Patch:
+  - ![Kustomize patches](assets/images/110_kustomize_patches.png)
+- There are 2 ways of define Patches in Kustomize (Json 6902 is what we saw above):
+- ![Kustomize patch definitions](assets/images/111_kustomize_patch_definitions.png)
+- We can move the values of patch definition to a separate files like the following (for each standard):
+- ![Kustomize patch inline file 1](assets/images/112_kustomize_inline_file_1.png)
+
+- Example of **Replace** a **Dictionary** item (in both Json 6902 and strategic Merge, in both inline and file):
+![Kustomize patch replace 1](assets/images/113_kustomize_patch_replace_1.png)
+![Kustomize patch replace 2](assets/images/113_kustomize_patch_replace_2.png)
+- Example of **Add** a **Dictionary** item:
+![Kustomize patch add 1](assets/images/114_kustomize_patch_add_1.png)
+![Kustomize patch add 2](assets/images/114_kustomize_patch_add_2.png)
+- Examples of **Remove** a **Dictionary** item:
+![Kustomize patch remove 1](assets/images/115_kustomize_patch_remove_1.png)
+![Kustomize patch remove 2](assets/images/115_kustomize_patch_remove_2.png)
+- Examples of Replace a **List** item. Note that `0` is index of array item:
+![Kustomize patch replace list 1](assets/images/116_kustomize_patch_replace_list_1.png)
+![Kustomize patch replace list 2](assets/images/116_kustomize_patch_replace_list_2.png)
+- Examples of **Add** a **list** item. Note that instead of `-` (which means append to the end), we can use index of new item
+![Kustomize patch add list 1](assets/images/117_kustomize_patch_add_list_1.png)
+![Kustomize patch add list 2](assets/images/117_kustomize_patch_add_list_2.png)
+- Examples of **Remove** of **list** item. Take care of `$patch: delete` and `name: database`. It means delete all containers that has name:database
+![Kustomize patch remove list 1](assets/images/118_kustomize_patch_remove_list_1.png)
+![Kustomize patch remove list 2](assets/images/118_kustomize_patch_remove_list_2.png)
 
 # Additional Commands
  
