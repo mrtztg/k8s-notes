@@ -2294,13 +2294,14 @@ We can 2 concept in Docker:
 - We can move the values of patch definition to a separate files like the following (for each standard):
 - ![Kustomize patch inline file 1](assets/images/112_kustomize_inline_file_1.png)
 
+- *Path* starts with `/` in patches.
 - Example of **Replace** a **Dictionary** item (in both Json 6902 and strategic Merge, in both inline and file):
 ![Kustomize patch replace 1](assets/images/113_kustomize_patch_replace_1.png)
 ![Kustomize patch replace 2](assets/images/113_kustomize_patch_replace_2.png)
 - Example of **Add** a **Dictionary** item:
 ![Kustomize patch add 1](assets/images/114_kustomize_patch_add_1.png)
 ![Kustomize patch add 2](assets/images/114_kustomize_patch_add_2.png)
-- Examples of **Remove** a **Dictionary** item:
+- Examples of **Remove** a **Dictionary** item: (Note that in Json6902 the keyword is *remove*)
 ![Kustomize patch remove 1](assets/images/115_kustomize_patch_remove_1.png)
 ![Kustomize patch remove 2](assets/images/115_kustomize_patch_remove_2.png)
 - Examples of Replace a **List** item. Note that `0` is index of array item:
@@ -2313,8 +2314,16 @@ We can 2 concept in Docker:
 ![Kustomize patch remove list 1](assets/images/118_kustomize_patch_remove_list_1.png)
 ![Kustomize patch remove list 2](assets/images/118_kustomize_patch_remove_list_2.png)
 
+### Overlays
+- Now with combining all topics above, we can achieve situations like *per environment customization* (file structure can be different)
+![Per env customization](assets/images/119_kustomize_per_env.png)
+- For achieving this, we'll use overlays:
+![Overlays](assets/images/120_kustomize_overlays.png)
+- Even different environments can have different amount of kustomization resources files:
+![Overlays 2](assets/images/120_kustomize_overlays_2.png)
+
 # Additional Commands
- 
+  
 - Get all running components in groups: `kubectl get all`
 - To keep live watch on any get command in k8s, add --watch param. E.g `kubetctl get po --watch`
 - If we want to get count of resources (Pod here)
