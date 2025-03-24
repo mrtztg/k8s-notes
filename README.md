@@ -2321,6 +2321,20 @@ We can 2 concept in Docker:
 ![Overlays](assets/images/120_kustomize_overlays.png)
 - Even different environments can have different amount of kustomization resources files:
 ![Overlays 2](assets/images/120_kustomize_overlays_2.png)
+### Components
+- Components are useful when we want to reuse peices of configurations for subset of overlays, without duplicating configurations. For example, in the following image, we want to have `postgres-depl` and `deployment-patch` only on premium and dev overlays:
+- ![Kustomize components](assets/images/121_kustomize_components.jpg)
+  
+# Troubleshooting
+## Networking
+- If the app is not reachable for the front user, firstly, draw a diagram of the request flow like image below, Then start testing from front to back.
+![Troubleshoot networking](assets/images/122_troubleshoot_networking.png)
+- In the example above, we'll follow, to find the issue:
+  1. Try to reach out the application using curl: `curl http://web-service-ip:node-port`
+  2. See `kubectl describe svc <serviceName>` and make sure the port, endpoints are correct.
+  3. Find the Pod that the service points to, and make sure it's in running state. And even run `k describe <podName>`
+  4. Check the logs of Pod and see any problematic log. You can even check the logs of previous deploy using `k logs <podName> -f --previous`
+  5. Check the status of DB service
 
 # Additional Commands
   
