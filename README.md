@@ -2326,7 +2326,7 @@ We can 2 concept in Docker:
 - ![Kustomize components](assets/images/121_kustomize_components.jpg)
   
 # Troubleshooting
-## Networking
+## Application Failures
 - If the app is not reachable for the front user, firstly, draw a diagram of the request flow like image below, Then start testing from front to back.
 ![Troubleshoot networking](assets/images/122_troubleshoot_networking.png)
 - In the example above, we'll follow, to find the issue:
@@ -2335,6 +2335,19 @@ We can 2 concept in Docker:
   3. Find the Pod that the service points to, and make sure it's in running state. And even run `k describe <podName>`
   4. Check the logs of Pod and see any problematic log. You can even check the logs of previous deploy using `k logs <podName> -f --previous`
   5. Check the status of DB service
+## Controlplane failures
+- To find such issues:
+  1. Get status of Nodes (`k get no`) and Pods (`k get po`) first
+  2. If Controlplane is installed using kubeadm, check the Pods of kube-system namespace. Otherwise, check status of services:
+    - `service kube-apiserver status`, `service kube-controller-manager status`, `service kube-scheduler status` on master node, or `service kubelet status` and `service kube-proxy status`
+  3. Check the logs of controlplane component:
+    - So if kubeadm, check logs of kube-apiserver pod: `k logs kube-apiserver-master -n kube-system`
+    - Otherwise, check the service in the host machine: `sudo journalctl -u kube-apiserver`
+## Node failures
+- First check Nodes using `k get no`, for the NoReady node:
+  1. Run `k describe <nodeName>`. check for `Conditions` section. Which one is `unknown`? Focus on that. For example, check `top` for available memory or `df -h` for available disk space
+  2. Then check the status of kubelet: `service kubelet status` or the service `sudo journalctl -u kubelet`
+  3. Check kubelet's certificate and make sure it's part of the right group, and it's not expired
 
 # Additional Commands
   
