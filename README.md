@@ -380,17 +380,26 @@ spec:
 
 - Namespaces is like houses. People in the house (family members) call each other with their first name only. They all have access to shared resources. But when family members want to call members of other family, they should call their fullname.
   ![Family like Namespaces](assets/images/30_namespaces_family.png)
+
 - Namespeces isolates its components (like Pods, etc) so they can't be altered by mistake. For example, we won't remove Pods in `prod` namespaces instead of `dev` by mistake.
+
 - Kubernetes automatically creates a `default` namespace for us in the creation of a cluster, and all our Pods, etc are creating in this NS. Kubernetes also craetes other Namespaces (like kube-public and kube-system) to isolate its critical components and prevent modification by mistake.
+
 - If we're environment and/or clluster is small, just keep using the `default` NS. But if you want to go with enterprise level setup, you can create NSes like `dev` and `prod` and so on.
+
 - If we access a DB in current NS using `mysql.connect("db-service")`, for accessing DB in another NS we should use `mysql.connect("db-service.dev.svc.cluster.local")`. More details about this format:
+  
   - `cluster.local` default domain name of k8s cluster
   - `svc` subdomain for service
   - `dev` actual namespaces
   - `db-service` service name
+
 - Commands:
+  
   - `kubectl get po --namespace=dev` : --namespace is used to get resoruces in other namespaces than current one
+  
   - `kubectl create -f my-pod.yaml --namespace=dev` . You can define which namespace the resource should created in. Another way is adding `namespace: dev` in `metadata` section of definition file.
+  
   - To create namespace, you can either use command `kubectl create namespace dev` or using definition file:
     
     ```yaml
@@ -399,10 +408,14 @@ spec:
     metadata:
       name: dev
     ```
+  
   - To set another namespace as current NS, use:
+    
     - `kubectl config set-context $(kubectl config current-context) --namespace=dev`. Or `kubectl config set-context --current --namespace=dev`
     - Now you switch to this NS and don't need to define `--namespace` parameter to accessing resources in it.
+  
   - To view resources in name spaces, use `--all-namespaces`, like `kubectl get po --all-namespace`
+
 - We can define policies for each NS using Quotas, either using command parameters or definition file:
   
   ```yaml
@@ -458,9 +471,13 @@ In the above comamnds, you as administrator is responsible to final result. For 
 ## Labels & Selectors
 
 - Labels in k8s are like tags in AWS or in YouTube post. It's for assigning resources to different groups. So, we can use tags to select those resources together.
+
 - You can as many labels as you want for your resource.
+
 - Also, if we want a group of resource been used together by another resource (Like Pods been used by a ReplicaSet), we use labels.
+
 - For getting resources by labels, use like this `--selector app=Frontend` or `-l app=Frontend`. If we want to get resources that have multiple tags (all are must) use colon like `-l app=FE,env=dev`
+
 - *Annotations* field is also been used for other informative data
   
   ```yaml
@@ -476,6 +493,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 ## Pod Extra Notes
 
 - We can edit only the following specifications of a Pod:
+  
   - `spec.containers[*].image`
   - `spec.initContainers[*].image`
   - `spec.activeDeadlineSeconds`
@@ -485,6 +503,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
     2. Before deleting the Pod, export the definition using `k get po {PodName} -o yaml > {OutputDefFile}`. Then delete the Pod and create new one using the newly created def file.
   - But if we edit the Deployment that has Pods inside, the Deployment will delete Pods and create new ones using the edited definition.
   - Note: Instead of delete and recreate, we can use `replace --force` command
+
 - To run commands on Pod (sleep in this example):
   
   ```yaml
@@ -499,8 +518,11 @@ In the above comamnds, you as administrator is responsible to final result. For 
   ```
   
   or you can generate YAML file using dry-run `k run my-nginx --image=nginx --dry-run=client -o yaml --command -- sleep 1000`. Note that `--` part should be at the end.
+
 - To see what's the owner of the Pod (like ReplicaSet, Deployment, etc), get yaml of Pod using `kubectl get pod {PodName} -n {Namespace} -o yaml` and look for `ownerReferences -> kind`.
+
 - To run a command in a container in ad Pod, run `kubectl exec -it <podName> -- <command>`, for example:
+  
   - `k exec -it myPod -- cat /logs/logs.txt` to print content of logs.txt file
   - `k exec -it myPod -- sh` to enter interactive command line of the container.
 
@@ -570,6 +592,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - Taint & Tolerant is only for **Preventing** Pods from placing on certain Nodes, not **Forcing**. For Forcing, we'll use **Node Affinity**.
 
 - Then we should define the matching tolerants in the Pods we want to sit in that Node:
+  
   ```yaml
   apiVersion: v1
   kind: Pod
@@ -584,6 +607,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
     operator: "Equal"
     value: "blue"
     effect: "NoSchedule"
+  ```
 
 - Master Node in k8s is also a Node, line Worker Nodes. Why scheduler doesn't schedule any Pods on Master Node? Because Master Node has a taint on it (try to not modify this taint):
   ![Master Node's Taint](assets/images/32_mater_node_taint.png)
@@ -598,8 +622,11 @@ In the above comamnds, you as administrator is responsible to final result. For 
 ## Node Selectors
 
 - Using labels/selectors, we can define which Nodes our Pod can deployed in, using labels.
+
 - To do this, we add label to Node(s) using:
+  
   - `kubectl label nodes {node_name} {label-key}={label_value}` Like `kubectl label no node01 size=Large`
+  
   - Then set selector in Pod(s):
     
     ```yaml
@@ -610,7 +637,9 @@ In the above comamnds, you as administrator is responsible to final result. For 
     nodeSelector:
       size: Large
     ```
+
 - Node Selector is very limited. E.g we can define multiple filter, or we can't define NOT operator. For advanced usages, use Node Affinity
+
 - To see Node labels, other than `describe` comamnd, we can use `k get nodes --show-labels`
 
 ## Node Affinity
@@ -748,7 +777,9 @@ In the above comamnds, you as administrator is responsible to final result. For 
 # Daemon Sets
 
 - Daemon sets is very similar to ReplicaSet, but it makes sure at exactly one replica of the Pod is deployed in all Nodes in the Cluster. Even if a Node been added after DaemonSet creation. Some usages of DaemonSet is monitoring or logging tools that we want to have in all Nodes. Even kube-proxy uses the same concept.
+
 - How k8s does DaemonSet behind the scenes? Using labels and NodeAffinity.
+
 - To create DaemonSet, create very similar definition to ReplicaSet:
   
   ```yaml
@@ -769,6 +800,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
           - name: monitoring-agent
             image: monitoring-agent
   ```
+
 - Run `k create -f my-daemon-set.yaml` to create and use `k get daemonset` to list.
   ![Daemon Sets](assets/images/35_daemonsets.png)
 
@@ -798,6 +830,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
   | Created by the Kubelet                         | Created by Kube-API server (DaemonSet Controller) to make sure we have exactly 1 replica per Node |
   | Deploy Control Plane components as Static Pods | Deploy Monitoring Agents, Logging Agents on Nodes                                                 |
   | Ignored by the Kube-Scheduler                  |                                                                                                   |
+
 - If the static pod is in another Node (not in your current connected Node), you should ssh to it first like using `ssh {nodeIP}` or `kubeclt ssh node {nodeName}`. Then look for kubelet config file.
 
 ## Multiple Schedulers
@@ -996,6 +1029,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - Parametes of both ENTRYPOINT and CMD should be in one of the following formats:
   
   - `CMD command param1` like `CMD sleep 5`
+  
   - `CMD ["command", "param1"]` like `CMD ["sleep", "5"]`
     
     ### Back to k8s
@@ -1015,6 +1049,9 @@ In the above comamnds, you as administrator is responsible to final result. For 
   
   - "sleep"
   - "1000"
+    
+    ```
+    
     ```
 
 - We can even pass command and args in commanline like this:
@@ -1036,12 +1073,15 @@ In the above comamnds, you as administrator is responsible to final result. For 
         - name: APP_COLOR
           value: blue
   ```
+
 - But there are other ways to define environment variables as well. ConfigMaps and Secrets.
 
 ## Config Maps
 
 - We can seperate Pod definition from env variables using ConfigMaps.
+
 - To create config map in imperative way:
+  
   - `kubectl create configmap <config-name> --from-literal=key=value. E.g:
     - ```bash
       kubectl create configmap \
@@ -1049,6 +1089,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
                     --from-literal=APP_MODE=prod
       ```
   - `kubectl create configmap <config-name> --from-file=<path-to-file>` . e.g:
+
 - To create in declerative way:
   
   ```yaml
@@ -1062,7 +1103,9 @@ In the above comamnds, you as administrator is responsible to final result. For 
   ```
   
     Then run `k craete -f my-config-map.yaml`
+
 - `kubectl get cm` and `k describe cm` also also available
+
 - To inject the whole configMap(s):
   
   ```yaml
@@ -1075,6 +1118,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
         - configMapRef:
             name: db-config
   ```
+
 - To inject single env from configMap:
   
   ```yaml
@@ -1088,6 +1132,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
                   name: app-config
                   key: APP_COLOR
   ```
+
 - To inject the whole data as a file in volume:
   
   ```yaml
@@ -1100,11 +1145,16 @@ In the above comamnds, you as administrator is responsible to final result. For 
 ## Secrets
 
 - Secrets are a proper k8s object to store credentials. But keep in mind that their values in Pod definition and even in ETCD are not encrypted. Also, people who have access to the namespace, can see its values. If you want to secure your secrets, maybe better to use secret management solutions in providers like AWS, GCP, or solutions like Harshicorp Vault, Helm Secrets so on.
+
 - Secrets and their commands are very similar to configMaps, with tiny differences like base64 encoded values and can create pods using those secrets.
+
 - The ways to add secrets:
+  
   - The Imperative ways:
+    
     - `kubectl create secret generic <secret-name> --from-literal=<key1>=<value1> --from-literal=<key2>...`
     - `kubectl create secret generic --from-file=<path-to-file>`
+  
   - The Declarative way (to create with `kubectl -f create <def-file>`):
     
     ```yaml
@@ -1117,10 +1167,14 @@ In the above comamnds, you as administrator is responsible to final result. For 
       DB_USER: cm9vdA== # This is base64 encoded version of 'root'
       DB_PASSWORD: cGFzc3dk
     ```
+    
     - Note that the values should be `base64` encoded.
     - To `base64` encode, run `echo -n "<myvalue>" | base64` in command line, and to decode run `echo "<myvalue>" | base64 --decode`.
+
 - Secret values will be hidden in `k describe secrets`. If you want to see values, use `k get secret <secret-name> -o yaml`
+
 - To inject secrets to Pod definition, we have some ways:
+  
   - Inject the entire secret
     
     ```yaml
@@ -1131,6 +1185,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
           - secretRef:
               name: <secret-name>
     ```
+  
   - Inject single env value
     
     ```yaml
@@ -1144,6 +1199,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
                 name: db-secret
                 key: DB_PASSWORD
     ```
+  
   - Inject the entire secret as file in volume
     
     ```yaml
@@ -1153,6 +1209,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
         secret:
           secretName: db-secret
     ```
+    
     - Note that in this way, each secret value will be stored in a separated file. For example DB_PASSWORD value will be sit in `/opt/db-secret-volumes/DB_PASSWORD` file.
 
 ### Encrypt data at rest
@@ -1166,7 +1223,9 @@ In the above comamnds, you as administrator is responsible to final result. For 
 ## InitContainers
 
 - If any of the containers in Pod finish its job or crashes, the whole Pod will get restarted. So, what should we do if we have a script or job that want to run **before** the actual container starts. But we don't want the whole Pod gets restarted when that side container finished its job. InitContainers is the solution.
+
 - InitContainer and their definitions are very similar to actual containers, but they gets executed before actual containers. They should be short-running jobs not persistent. Also if we define more than one initContainers, they'll run **one at a time in sequential order**
+
 - InitContiners should run successfully (exitCode=0), otherwise the Pod will get restarted if InitContainer fail.
   
   ```yaml
@@ -1182,20 +1241,24 @@ In the above comamnds, you as administrator is responsible to final result. For 
       image: busybox
       command: ['sh', '-c', 'git clone <some-repository-that-will-be-used-by-application> ; done;']
   ```
+
 - If a Pod is not READY, check `READY` column in `k get po`. If you see `Init:..` Means it's in stage or running initContainers. So, look at definition of its initContainers. If there is a problem in initContiner running, we can find it usineg `k logs {podName} -c initContainers`
 
 ## Auth Scaling
+
 - One big purpose of using orchestraion solutions is auto scaling. When it comes to k8s, we have Cluster scaling and Workload scaling. See the image below. Note that Vertical Cluster scaling is very uncommon approach, so it didn't came in the picture
   ![Scaling methods](assets/images/123_scaling_methods.png)
-### HPA (Horizontal Pod Autoscaler)
+  
+  ### HPA (Horizontal Pod Autoscaler)
 - The manual way of Pods horizonal scaling is to monitor the Pods resource usage by `k top pod` and scale using `k scale deploy ...` whenever needed. But we can define auto scaler. We can use either imperative or declerative way:
   - `k autoscale deployment <my-deploy> --cpu-percent=50 --min=1 --max` . This means when CPU percent reaches 50%, add more pods. But maximum scale out will be to 10 Pods.
-  ```yaml
-  apiVersion: autoscaling/v2
-  kind: HorizontalPodAutoscaler
-  metadata:
+    
+    ```yaml
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
     name: my-app-hpa
-  spec:
+    spec:
     scaleTargetRef:
       apiVersion: apps/v1
       kind: Deployment
@@ -1209,7 +1272,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
         target:
           type: Utilization
           averagetUtilization: 50
-  ```
+    ```
 - Run `k get hpa` to get all HPAs, and `k delete hpa <hpaName>` to remove one.
   - If `k get hpa` results have TARGETS: `<unknown/80%>`, check `k describe hpa <hpaName>`. It usually means either:
     - the HPA is unable to retrieve the current status of the specified target, e.g: we didn't define resources limites or equests for the Pod.
@@ -1283,13 +1346,19 @@ In the above comamnds, you as administrator is responsible to final result. For 
 ## Backup and Restore
 
 - In k8s cluster, there are 3 candidates for backup:
+  
   - Resource Configuration
+    
     - To backup resources configurations, a good way is always have and up-to-date definition files of our resources (Pod definitions, Deploy, so on). But sometimes our different departments use imperative commands to create & update resources (not using definition file). In such situation that our definition files does not reflect the actual resources on k8s cluster, we may use:
       - Run `kubectl get all --all-namespaces -o yaml > all-deploy-services.yaml` to extract config of our resources. But it won't export all resource groups, so better to use the next solution
       - Use k8s backup tools like *VELERO*.
+  
   - ETCD Cluster 
+    
     - ETCD Cluster stores information about state of our cluster (like Nodes, so on), It's hosted on in MasterNode(s). While configuring ETCD, we configured data folder in `etcd.service` (e.g `--date-dir=/var/lib/etcd`).
+    
     - To backup ETCD Cluster:
+      
       - We set a backup tool to backup ETCD data directory (that we can find in etcd.service)
       - Also ETCD comes with built-in snapshot solution.
         - First set ETCTCTL api version using: `export ETCDCTL_API=3` 
@@ -1308,6 +1377,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
           - Consider that `--data-dir` in ETCD Pod definition file is inside the container, it's mounted to a directory in host file. So, find the the related hostPath in volumes section and modify that, instead of directly --data-dir in container section.
           - After making changes, k8s will restart the Pod. It may take minutes.
           - If the Pod remains on Pending state for a long time, delete it `k delete po -n kube-system {etcdContainerName}`
+    
     - Note: In all `etcdctl` commands, don't forget to set endpoint, cacert, cert and key if our ETCD is using TLS (can identify from describe)
       
       ```bash
@@ -1320,6 +1390,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
       ```
       
       ![ETCDCTL params](assets/images/49_etcdctl_params.png)
+  
   - Persistent Volumes (if we have any)
 
 # Security
@@ -1506,6 +1577,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 ## Config file
 
 - Actaully, for any call to apiserver, admin or user need to define certificate, key, CA and server (either curl command or kubectl) like:
+  
   - ```bash
     kubectl get pods \
         --server my-kube-playgroud:6443 \
@@ -1515,15 +1587,22 @@ In the above comamnds, you as administrator is responsible to final result. For 
     ```
     
     or
+  
   - ```bash
     curl http://my-kube-playground:6443/api/v1/pods -key <path-to-key> -cert <path-to-cert> -cacert <path-to-ca-cert>
     ```
+
 - But there is a better solution, using **Config** file. By defining clusters, users and contexts in this file, we don't need to pass certificates in commmand anymore.
+
 - Config file should have 3 parts:
+  
   - Clusters
+  
   - Users: Note that, we're just using already created user, not creating a user.
+  
   - Contexts: To define which user connects to which cluster. Context can be many to many connection between cluster and user. Means we can define cluster for a specific user and vice versa.
     ![Kube Config Diagram](assets/images/64_kube-config-diagram.png)
+  
   - Now, you can run your commands using the config file like `kubectl get pods --kubeconfig <path-to-config>`. But if your config file path be `$HOME/.kube/config` path, you don't need to pass --kubeconfig and just run `kubectl get pods`. You see? kubeadm and minikube created this file for us. That's the reason we don't need to define any certificate in `kubectl get pods` command.
     ```yaml
     apiVersion: v1
@@ -1535,10 +1614,12 @@ In the above comamnds, you as administrator is responsible to final result. For 
     
     current-context: finance@production
     clusters:
+  
   - name: my-kube-playground
     cluster:
       certificate-authority: ca.crt
       server: https://my-kube-playground:6443
+  
   - name: google
     cluster:
       server: # ...
@@ -1546,13 +1627,17 @@ In the above comamnds, you as administrator is responsible to final result. For 
     # We can define the actual certificate (but base64 encoded version) instead of passing file path.
     
       certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCakNDQWU2Z0F3SUJBZ0lCQVRBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwdGFXNXAKYTNWaVpVTkJNQjRYRFRJMU1ERXdNekU1TVRJME5sb1hEVE0xTURFd01qRTVNVEkwTmxvd0ZURVRNQkVHQTFVRQpBeE1LYldsdWFXdDFZbVZEUVRDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTFlqCnh3aFh1TEkvbElNakdWK3hocGFjU3YwUVNWbVV1c1dYMUVNNWd5bWZNRGtQQzFQNnNYOFpzTVcrem0vMC9pb0cKcVhuOFp6VytRQ3JxSXd6ek1HOXNkRi9JWUpvd2FOaklDeVNZY0k3YTBqdGJMNlQzMzh0N2lmUXh3TGRKNVRtOApqKzhwM25rckxtQ1NyTUNSaURCdnYxWVppMW9iM3g3dDYxYitBUVB4dG9QdzRMOEQ3dmxCMC9uYXdWRDlzS1ZqCmkxN09JWW1xTkZ4YVN4L1BsbFdHV2hOOWFVMnBFaDUvRm1SQnlYVUVqb0pvQTFyWVprSDU5RFI4aW1XREtjRXEKZWY3a1FmTXBKN1UxeEllNUNqM3gyekJuR3F2VHdrTGtXdmU1UVFtRm9BV0JSVmp1VTMrcytNdmZHcE5wN0hjdwo2VlZpdjRBNE93d1NBK0l1S0xVQ0F3RUFBYU5oTUY4d0RnWURWUjBQQVFIL0JBUURBZ0trTUIwR0ExVWRKUVFXCk1CUUdDQ3NHQVFVRkJ3TUNCZ2dyQmdFRkJRY0RBVEFQQmdOVkhSTUJBZjhFQlRBREFRSC9NQjBHQTFVZERnUVcKQkJSR2pPdTduQnJoYmJWaWlVMXhtTG9leE1KSWFqQU5CZ2txaGtpRzl3MEJBUXNGQUFPQ0FRRUFRYzYrSlloMwpNY2FuemFhVG1rajRZQ2pBbGN1TndoTFV1aFhsWU5CRnB6Q0owajZhNHB5RmdON29JcVp4YVBCUStITGpCaEt1Cks5ZGcrVXZ6ZDdmZkM4blNnbFV5RU5TMDJlSjU1cVEzOEN4UDltcnZ5U2N4K3UvczByME1GU2h5V0ROTzJZME8KN0tNbGxMUmZTVW9GVktVREJmZTV5UjVsTW0wZXYwZDI5ZUFBU0ZmTmxRUkdpTDVERUFUWkpXckdhaDNOdlRTQQorNXg0RnNXRC95NU0wZVlXSE1BdUZEQWRsaEhxdDA4V1NLVDk0ZXdPa3Fzb1dnckNxYUZ6dndXWXo0YVhSaldWCmdZTG5QTDNidXhTaWw2N2V6SGlCQjMvblp1Q3o0eXhnazllTXQvdUV5WjdqeUJNdEtTSGc0NFVRdFJpbE1ncVIKUUIrYkRHdURWOHlTUXc9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  
   - name: dev # ...
+  
   - name: production # ...
     contexts:
+  
   - name: my-kube-admin@my-kube-playground
     context:
       cluster: my-kube-playground
       user: my-kube-admin
+  
   - name: admin@production
     context:
       cluster: production
@@ -1562,20 +1647,30 @@ In the above comamnds, you as administrator is responsible to final result. For 
     
       namespace: finance
     users:
+  
   - name: my-kube-admin
     user:
       client-certificate: admin.crt
       client-key: admin.key
+  
   - name: dev-user
     user: #...
+  
   - name: prod-user # ...
+  
   - name: admin # ....
     ```
+
 - Note that we don't need to any object using this definition file, just we need to use it in our kubectl or http calls of kubernetes.
+
 - To view the using config file, we can use command line as well `kubectl view config`
+
 - To change the context (which will automatically update config file as well), can run command `kubectl config use-context <contextNama>`
+
 - Using command line, we can even change other things of config. See `kubectl config -h`
+
 - Instead of passing CA certificate file (and even for other certificates) in config file, we can pass the actual certificate itself (but encoded version using base64) like.
+
 - If we faced an error similar to `error: unable to read client-cert ...` in any **kubectl** command (like `kubectl get pods`), the problem is in TLS of user in our config. Check that.
 
 ## API Groups
@@ -1614,6 +1709,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 ### RBAC
 
 - Role bases access, grants permission in namespace scope. It won't affect the whole cluster.
+
 - First we craete (`k create -f <defFile.yaml>`) a Role using definition file:
   
   ```yaml
@@ -1632,6 +1728,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
       # resourceName field is optional. With this field, we limit the privilege to specific resources (E.g only Pods with name 'blue' and 'green', )
       resourceNames: ["blue", "green"]
   ```
+
 - Next we create a RoleBinding to bind user to the Role
   
   ```yaml
@@ -1649,11 +1746,17 @@ In the above comamnds, you as administrator is responsible to final result. For 
     name: developer
     apiGroup: rbac.authorization.k8s.io
   ```
+
 - Note: Role and RoleBindings fall under namespaces scope. If you want to create role or rolebinding for another namespace, define the namespace in `metadata`.
+
 - We can also create either Role and Rolebinding using imperative commands. Run `k create role -h` to get information. Or even create definition using --dry-run.
+
 - Run `kubectl get roles` to get roles and `kubectl describe role <roleName>` to get its information
+
 - Run `kubectl get rolebindings` to get roleBindings and `kubectl describe rolebinding <roleBindingName>` to get its info.
+
 - If you (as user) want to check whether you have to access to perform a action in a cluster, run command like `kubectl auth can-i create pod`.
+  
   - If you're admin and want to check a user's access, run `kubectl auth can-i create pod --as johndoe`
   - In both of the commands above, you can add `--namespace <NSName>` to check permission in specific Node
   - If you want to perform a action as a user, add --as, like `kubectl get po --as johndoe`
@@ -1661,6 +1764,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 **Cluster Roles**
 
 - If we want to grant privilege in cluster level (**either to namespace scope resources like Pods or cluster scoped resources like Nodes**), we should use cluster roles. 
+
 - First we should create Cluster Role using such def file:
   
   ```yaml
@@ -1677,6 +1781,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
       resources: ["pods"]
       verbs: ["list"]
   ```
+
 - Then create ClusterRoleBinding using such def file:
   
   ```yaml
@@ -1693,6 +1798,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
     name: cluster-administrator
     apiGroup: rbac.authorization.k8s.io
   ```
+
 - If we want to give access to any resources to the Role or ClusterRole:
   
   ```yaml
@@ -1707,24 +1813,35 @@ In the above comamnds, you as administrator is responsible to final result. For 
   ```
   
   ### Service Accounts
+
 - Services accounts is authorization method for applications (e.g Prometheus, Jenkins, so on).
+
 - Run `kubectl create serviceaccount <aName>` to create ServiceAccount, and run `kubectl get serviceaccount` to list all serviceAccounts.
+
 - Now, we need a token from this service account, the the desired application can use this token to connect to the k8s api server as this serviceAccount.
+  
   - To generate token for this SA, run `kubectl create token <serviceAccountName>`. The token will get printed.
   - If you want this SecretAccount to be used in a Pod, there is an easier way. Just define `serviceAccountName: <serviceAccountName>` in `spec` of Pod definition when want to create it. Then k8s will automatically generate a token from that ServiceAccount and will mount it to the Pod in path `var/run/secrets/kubernetes.io/serviceaccount`. Your app can easily read the token from there. You can see this projected volume by running `k describe pod <podName>`. Also to see the token, log in the Pod `k exec -it mykubernetescontainer -- /bin/bash` and walk to the serviceaccount path.
   - Notes:
     - If you don't assign the `serviceAccountName` in the Pod definition, k8s will use the `default` ServiceAccount. If you want to prevent k8s assign the default ServiceAccount to the Pod, add `automountServiceAccountToken: false` in Pod `spec`.
     - The token that created for ServiceAccount will have 'audience' and 'expireDate' for better security. But when we use define 'serviceAccountName' in Pod definition, k8s will even add Pod information to the token to enhance security even more.
+
 - The token is JWT. So, you can decode it in jwt.io website.
+
 - Some notes about older k8s versions: 
+  
   - In old versions (< v1.24), k8s was creating long-life tokens without without audience field. Also, it was creating "Secret" to hold tokens, then mounted that secret to the Pod. But changed these behaviours for security enhancement.
+
 - After service account created, you now can grant permissions to it using RBAC method using imperative command. Means first create a Role with proper privileges, then run `k create rolebinding <newRoleBindingName> --serviceaccount=<namespace>:<serviceAccountName> --role=<roleName>`
+
 - When we have token of service account in hand, our application can use that token to authorize. For manual debugging, run something like `curl https://<kuberAddres>:<kuberPort>/api -insecure --header "Authoriation: Bearer <tokenOfServiceAccount>`
 
 ## Fetch images from Private Repositories
 
 - Other than public images, we use our own images in the Pod. But how should we pass login credentials of that Private Repository?
+  
   - Run `kubectl create secret docker-registry <secretName> --docker-server=<repositoryUrl> --docker-username=<username> --docker-password=<password> --docker-email=<email>`
+  
   - Then pass the secret name in Pod definition like this:
     
     ```yaml
@@ -1739,8 +1856,11 @@ In the above comamnds, you as administrator is responsible to final result. For 
     ## Security Contexts
     
     **Security In Docker**
+
 - For understanding security in k8s, we should know security in Docker.
+
 - Containers are not completely separated (like VMs). Containers and the host (host of out Docker) share the Kernel.
+  
   - Processes of Docker containers actually run in the host machine, but Docker seperates and isolates them from the Host machine and from other containers using namespaces.
   - All of the processess inside Docker containers ran by `root` user of the host machine. Isn't it dangerous? No, because Docker limits the permissions of `root` user of the container, it can't perform any action in host machine by default, like restarting, opening and app, etc in Host machine
   - If we want that Docker to use machine's non-root user to run the commands of container, we can specify it in run command like `docker run --user=<user_id.e.g:1000> ubuntu sleep 3000`
@@ -1752,6 +1872,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 **Back to Kubernetes**
 
 - We can define `runAsUser` (**security context user**) both in Pod level (inside Pod's `spec` section) or container level. If you define in both, Container level security context will override Pod level.
+
 - We can also adjust capabilities in container level. Example:
   
   ```yaml
@@ -1765,6 +1886,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
           capabilities:
             add: ["MAC_ADMIN"]
   ```
+
 - After making changes on `runAsUser`, verify it using `k exec <podname> -- whoami`
 
 ## Network Policies
@@ -1866,8 +1988,11 @@ In the above comamnds, you as administrator is responsible to final result. For 
                 minimum: 1
                 maximum: 10
     ```
+  
   - But we also need a Controller for this CRD. Otherwise, the if we create a object from this CRD, the object won't do any action, neither will be checked for the status.
+  
   - You can create Custom Controllers with languages like Python, but the communication with Kubernetes apiserver will be challenging. The best way is to write it in Golang.
+    
     - Get sample controller from [here](https://github.com/kubernetes/sample-controller), develop the business logic inside (like booking flight).
     - Then build the code with `go build -o sample-controller .`
     - We can run it using `./sample-controller -kubeconfig=$HOME/.kube/config`, but the better way is containerise it as Docker, and deploy as a Pod to kubernetes
@@ -1937,6 +2062,7 @@ We can 2 concept in Docker:
         type: Directory
         path: /path-in-host
   ```
+
 - If we use different storage solutions, like AWS EBS:
   
   ```yaml
@@ -1980,14 +2106,19 @@ We can 2 concept in Docker:
 ### Persistent Volume Claims (PVC)
 
 - PV and PVCs are separated objects.
+  
   - Admin creates PVs, but it's not allocated to any Pod yet.
   - The user (like developer or admin himself) creates a PVC.
   - Based on PVC, k8s looks between all available PVs to find the maching properties (like Sufficient Capacity, Access Modes, Volume Modes, Storage Class, so on).
     - If we know that there are several mathcing PVs with our PVC, we can filter using `selector` in PVC
   - k8s bind the PVC to the chosen PVC
+
 - There is **One to One** relationship between PV and PVC. PV can be use by only one PVC at a time, even if there is available capacity in PV. 
+  
   - In other words, if capacity of claim was 50Mi and PV's capacity was 100Mi, the claim's capacity will be 100Mi if it claims the PV successfully.
+
 - If there are no available mathing PV, then PVC will stay in Pending state until a proper PV made available.
+
 - Definition of PVC:
   
   ```yaml
@@ -2003,14 +2134,18 @@ We can 2 concept in Docker:
       requests:
         storage: 500Mi
   ```
+
 - To see PVCs and bounded volumes: `kubectl get persistentvolumeclaim` or `k get pvc`
+
 - To delete a PVC, run `k delete pvc my-pvc`. But happens to the underlying PV? It has 3 strategy options (define them in `spec` of PV):
+  
   - `persistentVolumeReclaimPolicy: Retain`
     - Default behaviour is to Retain the PV. Means prevents any other PVC to claim it.
   - `persistentVolumeReclaimPolicy: Delete`
     - Deletes the volume
   - `persistentVolumeReclaimPolicy: Recycle` (Deparecated. Use dynamic volumes instead)
     - The data in the volume will be scrubed (`rm -rf /thevolume/*`) before being available for getting claimed.
+
 - To specify PVC in Pod definitions:
   
   ```yaml
@@ -2027,11 +2162,13 @@ We can 2 concept in Docker:
         persistentVolumeClaim:
           claimName: myclaim
   ```
+
 - If a PVC mounted to a Pod, and we try to delete the PVC, it'll stay in terminating status until the Pod is running. As soon as Pods get deleted, PVC will be deleted.
 
 ### Storage Classes
 
 - What should we do if we want to mount a volume from our provider (like GCP, AWS, so on)?
+  
   - One way is that every time we wanted a storage, create a disk on the provider manually, then create a PV that connects to that disk, like this:
     
     ```yaml
@@ -2043,6 +2180,7 @@ We can 2 concept in Docker:
         pdName: my-pd-dist
         fsType: ext4
     ```
+  
   - But there is an easier solution for this. We can create **Storage Classes** like this:
     
     ```yaml
@@ -2056,6 +2194,7 @@ We can 2 concept in Docker:
       type: pd-standard # Or 'pd-ssd'
       replication-type: none # or 'regional-pd'
     ```
+  
   - With this way, we don't need to create PV manually anymore. We just create Claim, and it calls the Storage Class, and storage class will privision a disk with required size for the claim automatically:
     
     ```yaml
@@ -2239,18 +2378,26 @@ We can 2 concept in Docker:
 ## DNS in Kubernetes
 
 - Kubernetes has a built-in DNS server. Whenever we create a service, k8s DNS service creates a record that maps *service name* to *service IP*. So, within the service's namespace, any Pod can reach to this service using service name (like `http://db-service`).
+  
   - But the Pods in another namespace (and even Pods in the same namespace) can reach to this using `<serviceName>.<namespace>`
+  
   - One step further, k8s groups all services in `svc` subdomain. So we can reach service using `<serviceName>.<namespace>.svc` e.g `http://db-service.appsNs.svc`
+  
   - Finally all services and Pod are grouped in a TLD domain which is `cluster.local` by default. So we can reach services using `<serviceName>.<namespace>.svc.<kubernetesTLD>`
+  
   - By default, k8s creates DNS records only for services. But we can enable Pod DNS record creation as well. Then, the similar pattern applies for Pods. But Pods' DNS names will be a copy of their IP address, by `.` characters replaced by `-`. But note that Pods are only reachable with full FQDN (`<podNS>.<namespace>.pod.<kubernetesTLD>`)
     ![k8s dns](assets/images/96_k8s_dns.png)
     
     ### CoreDNS in k8s
+
 - Kubernetes uses CoreDNS as a DNS server. CoreDNS is deployed as a Pod Replicaset in kubernetes. We can find its configuration in `/etc/coredns/Corefile` (which is pass in configmap of CoreDNS). The orange keywords are the plugins CoreDNS will use. `cluster.local` is kubernetes TLD used in DNS resolver. The row `pods` also enables DNS record creation for Pods. `proxy` line defines where the resolv.conf will be stored.
   ![CoreDNS config](assets/images/97_coredns_config.png)
+
 - CoreDNS will also have a k8s ClusterIP service to be reachable by k8s components. All the Pods will have `nameserver <coredns-cluserip>` in their `/etc/resolv.conf`. But how Pods will know what's the IP of CoreDNS? `kubelet` will store it. You can have a look on `/var/lib/kubelet/config.yaml` file, `clusterDNS` row.
+
 - If you want to know what's the IP of a DNS record (which added by CoreDNS), run `host <serviceName>`. You can see full fqdn like this:
   `my-service.default.svc.cluster.local has address 10.108.1.14`.
+  
   - But how CoreDNS can finds the full path just with the `my-service`? It added `search default.svc.cluster.local svc.cluster.local ...` to resolv.conf file of Pods (refer to DNS section). But note that it has search entries only for services, not Pods. so `<podName>` or `<podName>.<namespace>`, so on won't be reachable. 
 
 ## Ingress
@@ -2352,8 +2499,11 @@ We can 2 concept in Docker:
 - But if we want to have forward based on subdomain and path, the config will be like below. It'll
   
   - Redirect all traffic in `example.com/wear/*` to `wear` service
+  
   - Redirect all traffic in `auth.example.com/*` to `auth` service
+  
   - Redirect all traffic in `video.example.com/streming/*` to `video-streaming` service.
+  
   - Redirect all traffic in `viddo.example.com/live/*` to `video-live` service
     
     ```yaml
@@ -2440,11 +2590,16 @@ We can 2 concept in Docker:
 ## Gateway API
 
 - Gateway API in official L4 and L7 routing k8s project that represents Ingress, Load Balancing and Service Mesh APIs.
+
 - Acually, Ingress Controllers have limitations like:
+  
   - Doesn't support multi-tenancy, Namespace isolation, No RBAC for features, No resource isolation
   - No native support for TCP/UDP routing, Traffic splitting/weighting, Header manipulation, Authentication, Redirects, Rewriting, Rate limiting, Middleware, Websocket support, Custom error pages, Session affinity, CORS. Means we should define *Annotations*, which will make our Ingress config very locked in that specific Controller (like locked to Nginx Controller). Gateway API solved this problem.
+
 - In Gateway APIs, there are 3 personnas to manage. Means infra admin creates GatewayClass, Cluster Operator creates Gateway, And developers create like TLSRoute, HTTPRoute and etc.
+  
   - ![Gateway API Personna](assets/images/100_gateway_api_personnas.png)
+
 - GatewayClass how Gateway implemented by Controller. So, first we should create GatewayClass:
   
   ```yaml
@@ -2455,6 +2610,7 @@ We can 2 concept in Docker:
   spec:
     controllerName: example.com/gateway-controller
   ```
+  
   - Then we create Gateway:
     
     ```yaml
@@ -2469,6 +2625,7 @@ We can 2 concept in Docker:
       protocol: HTTP
       port: 80
     ```
+  
   - Now we create HTTPRoute (or other Route types) rule (which forwards all traffic in `www.example.com/login` to `example-service` service)
     
     ```yaml
@@ -2492,12 +2649,15 @@ We can 2 concept in Docker:
       - name: example-service
         port: 8080
     ```
+
 - List of supported Routes in Gateway API
   ![Supported Gateway Routes](assets/images/101_supported_Gateway_Routes.png)
+
 - The following examples are the Gateway API version of Ingress using Ingress-Controllers (you see how much structured and explicit they are)
   ![Ingress To Gateway example 1](assets/images/102_ingress_to_gateway_example1.png)
   ![Ingress To Gateway example 2](assets/images/102_ingress_to_gateway_example2.png)
   ![Ingress To Gateway example 3](assets/images/102_ingress_to_gateway_example3.png)
+
 - Most of the Solutions (like Nginx, Amazon EKS, Nginx, Traefik, etc) are already followed Gateway Controller implementation, and we can use them as Gateway API controller.
 
 # Install Kubernetes
@@ -2519,6 +2679,7 @@ We can 2 concept in Docker:
 - Helm version 3 has some big advantages over version 2:
   
   - I uses kubernets RBAC over Tiller solution, which makes it more secure
+  
   - It uses "3-way Strategic Merge Patch. Helm’s 3-way strategic merge patch compares three versions of a resource—the original deployed version, the current live state, and the new desired version—to figure out the exact changes needed. This way, it updates the resource without overwriting any manual or external changes.
     
     ## Helm Components
@@ -2556,8 +2717,11 @@ We can 2 concept in Docker:
 ### Helm Charts
 
 - A collections of files that contains all instructions of all the objects needs to be created in the cluster.
+
 - Like Docker Hub, there are public repositories for Helm Charts, like Appscode, Truecharts, Bitnami, etc. But all of them list their charts on `ArtifactHUB.io` website. So you can find alls of the public charts in this site.
+
 - The following picture is the content of a simple Helm chart. In helm charts, we usually only modify values files, because the actual definition files have the placeholders of values. Also, `Chart` file keeps information about Helm chart itself. 
+  
   - `apiVerion: v2` is for HelmCharts v3 (which is very recent version of Helm). But if the version is not defined or is `v1`, it refers for Helm v2. Some fields like *dependencies* and *type* introduced in Helm3. So, if we use Helm2, these new fields of Helm3 will be ignored
   - `appVersion` is the version of the app inside. It's just for informational purpose
   - `version` is the version of this Helm chart
@@ -2566,39 +2730,57 @@ We can 2 concept in Docker:
   - `keywords` and `maintainers` are informational fields mostly for public repos.
   - ![Simple Helmchart](assets/images/105_helm_chart_helloworld.png)
     ** Modify Helm chart**
+
 - For modifying default values of a chart (like changing BlogName of a Wordpress site) that will be downloaded from a repo, we have multiple ways:
+  
   1. Define in the parameters using `--set` like this:
      ![Modify Helm chart values using set](assets/images/106_helm_modify_values_set.png)
+  
   2. Pass all variables that we want to override in a file:
      ![Modify Helm chart values using set](assets/images/106_helm_modify_values_file.png)
+  
   3. Pull the chart using command like `helm pull bitnami/wordpress` and untar it or pull&untar using `helm pull --untar bitnami/wordpress`. You then will see all the files of the chart in current directory. Now open and edit any files you want, and then create the release using `helm install <desiredReleaseName> ./wordpress`
      
      ### Helm Releases
+
 - Whenever a charts applies, a **Release** is created, which is a single instance of the application. Each upgrade/deployment/change of the application creates a Revision in the **Release**
+
 - We can install multiple **Release** from a specific Helm chart. With having this feature, from a Wordpress Helm chart, we can create Releases like *news-blog-prod*, *news-blog-dev*, *knowledge-blog*, etc.
   
   ### Helm metadata
+
 - Helm stores all its metadata including configurations, releases that installed, charts been uses, etc inside a Secret in k8s cluster itself, instead of our local machine. So, everyone in our team can access the configurations
 
 # Kustomize
 
 - Let's imagine we want to different our application in 3 environments (like Dev, Stg, Prod). All definition files will be the same in all the copies, except a few fields (like Replica number). The traditional way is copying our definitions, and modify them. Which is not scalable and very bug mistake-prone, like what if we forgot to copy Service file to one of the environments.
+
 - **Kustomize** will solve this issue for us. With Kustomize, we define Base definitions and Overlays.
+  
   - ![Kustomize](assets/images/107_kustomize_base.png)
+
 - File structure of Kustomize will be like this:
+  
   - ![Kustomize file structure](assets/images/108_kustomize_file_structure.png)
+
 - **Kustomize** gets installed by **kubectl**, but it may not be the latest version.
   
   ### Kustomize vs Helm
+
 - Helm can also address the issue tha Kustomize tries to solve. But it's a bit more complex, because it uses Golang template format, instead of YAML replacements. Helm is a Package manager and has lots of more features, but Kustomize is an easy solution just for customisation.
   
   ## Kustomize usage
+
 - When our kustomize directory is ready, we can run `kustomize build <directoryPath>`. But it'll print the result int terminal. To create resources with the result, we should run either:
+  
   - `kustomize build <directoryPath> | kubectl create -f -`
   - or `kubectl apply -k <directoryPath>`
+
 - To delete the resources created by kustomize, we can run `kustomize build <dir> | k delete -f -` or `k delete -k <dir>`
+
 - If our resources starting grows, instead of having all of them in the main Kustomize directory, we create create sub-direcotories based on app scopes or app kind or etc, and pass their path in kustomize file like `- db/my-db-deploy.yaml`. But even a cleaner way is to create customize file in each directory, and import all those directories in the main kustomize:
   ![Kustomize directories](assets/images/109_kustomize_directories.png)
+
 - Try to use `kustomize create --autodetect --recursive` to auto detect definition files for ease.
 
 ### Transformers
@@ -2690,13 +2872,17 @@ We can 2 concept in Docker:
 
 - Now with combining all topics above, we can achieve situations like *per environment customization* (file structure can be different)
   ![Per env customization](assets/images/119_kustomize_per_env.png)
+
 - For achieving this, we'll use overlays:
   ![Overlays](assets/images/120_kustomize_overlays.png)
+
 - Even different environments can have different amount of kustomization resources files:
   ![Overlays 2](assets/images/120_kustomize_overlays_2.png)
   
   ### Components
+
 - Components are useful when we want to reuse peices of configurations for subset of overlays, without duplicating configurations. For example, in the following image, we want to have `postgres-depl` and `deployment-patch` only on premium and dev overlays:
+
 - ![Kustomize components](assets/images/121_kustomize_components.jpg)
 
 # Troubleshooting
@@ -2705,24 +2891,39 @@ We can 2 concept in Docker:
 
 - If the app is not reachable for the front user, firstly, draw a diagram of the request flow like image below, Then start testing from front to back.
   ![Troubleshoot networking](assets/images/122_troubleshoot_networking.png)
+
 - In the example above, we'll follow, to find the issue:
+  
   1. Try to reach out the application using curl: `curl http://web-service-ip:node-port`
+  
   2. See `kubectl describe svc <serviceName>` and make sure the port, endpoints are correct.
+  
   3. Find the Pod that the service points to, and make sure it's in running state. And even run `k describe <podName>`
+  
   4. Check the logs of Pod and see any problematic log. You can even check the logs of previous deploy using `k logs <podName> -f --previous`
+  
   5. Check the status of DB service
      
      ## Controlplane failures
+
 - To find such issues:
+  
   1. Get status of Nodes (`k get no`) and Pods (`k get po`) first
+  
   2. If Controlplane is installed using kubeadm, check the Pods of kube-system namespace. Otherwise, check status of services:
+     
      - `service kube-apiserver status`, `service kube-controller-manager status`, `service kube-scheduler status` on master node, or `service kubelet status` and `service kube-proxy status`
+  
   3. Check the logs of controlplane component:
+     
      - So if kubeadm, check logs of kube-apiserver pod: `k logs kube-apiserver-master -n kube-system`
+     
      - Otherwise, check the service in the host machine: `sudo journalctl -u kube-apiserver`
        
        ## Node failures
+
 - First check Nodes using `k get no`, for the NoReady node:
+  
   1. Run `k describe <nodeName>`. check for `Conditions` section. Which one is `unknown`? Focus on that. For example, check `top` for available memory or `df -h` for available disk space
   2. Then check the status of kubelet: `service kubelet status` or the service `sudo journalctl -u kubelet`
   3. Check kubelet's certificate and make sure it's part of the right group, and it's not expired
