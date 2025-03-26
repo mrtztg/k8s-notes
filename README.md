@@ -1211,7 +1211,12 @@ In the above comamnds, you as administrator is responsible to final result. For 
           averagetUtilization: 50
   ```
 - Run `k get hpa` to get all HPAs, and `k delete hpa <hpaName>` to remove one.
-- HPA uses the internal Metrics Server to monitor Pods. But we can configure to use Custom Metrics Adapters, or even External Adapter, like a DataDog service which is outside of our Cluster.
+  - If `k get hpa` results have TARGETS: `<unknown/80%>`, check `k describe hpa <hpaName>`. It usually means either:
+    - the HPA is unable to retrieve the current status of the specified target, e.g: we didn't define resources limites or equests for the Pod.
+    - Metric Server is not deployed or not working
+    - HPA target resource doesn't exist
+    - so on
+- HPA uses the internal `metrics-server` to monitor Pods. But we can configure to use Custom Metrics Adapters, or even External Adapter, like a DataDog service which is outside of our Cluster. 
 
 # Cluster Maintenance
 
@@ -2728,6 +2733,7 @@ We can 2 concept in Docker:
 - To keep live watch on any get command in k8s, add --watch param. E.g `kubetctl get po --watch`
 - If we want to get count of resources (Pod here)
   `kubectl get po --no-headers | wc -l` .
+- `kubectl events` or `kubectl events --for deploy/mydeployment` prints the most important information about events.
 
 # References & Cheat Sheets
 
