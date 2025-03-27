@@ -986,6 +986,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
         resources: ["pods"]
         scope: ["Namespaced"]
     ```
+- Note that for communication between Webhook and the API app we need caBundle. For having this, run `k create secret tls <desiredName> --key=<keyName>.key --cert=<certName>.crt`
 
 # Logging and Monitoring
 
@@ -2324,6 +2325,7 @@ We can 2 concept in Docker:
       resoureces:
         # ...
     ```
+- Local storage class doesn't support dynamic provisioning
 
 # Networking
 
