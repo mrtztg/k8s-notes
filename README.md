@@ -774,7 +774,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
       limits.memory: 10Gi
   ```
 
-# Daemon Sets
+## Daemon Sets
 
 - Daemon sets is very similar to ReplicaSet, but it makes sure at exactly one replica of the Pod is deployed in all Nodes in the Cluster. Even if a Node been added after DaemonSet creation. Some usages of DaemonSet is monitoring or logging tools that we want to have in all Nodes. Even kube-proxy uses the same concept.
 
@@ -931,6 +931,24 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - Kubernetes does all the scheduling process using Plugins and Extensions. k8s is highly customisable. We can modify these scheduler plugins and extensions and where and how they should be placed.
 - For configure plugins in schedulers:
   ![Scheduler Plugins config](assets/images/42_scheduler_plugins_config.png)
+
+## Admission Controllers
+- When we send a request to kubernetes (either using kubectl or the api call), it goes through api-server. api-server does authentication (using the certificate) and authorization (using Roles and Rolebindings). This authorization is a control gate, to make sure this user have access for the request he made (like create Pod, edit node, etc). But what if we want to have more complex checks or modifications? Like:
+  - Check if the image tag of the requested Pod creation is not `latest`
+  - Check targeted namespace exists
+  - Prevent using `runAsUser: 0` in Pod definition
+  - Allow certain Pod `capabilities` only.
+  - Enforce using specific metadata labels
+  - Define Default storage class
+  - Define EventRateLimit to the api-server
+  - So on
+- You see, these checks can't be done using RBAC. In this case, we should use **Admission Controllers**
+![Admission Controllers](assets/images/126_admission_controllers.png)
+- To see which admission plugins are enabled by default, run either:
+  - `kube-apiserver -h | grep enable-admission-plugins` if you installed k8s manually
+  - `kubectl exec kube-apiserver-controlplane -n kube-system -- kube-apiserver -h | grep enable-admission-plugins` if you installed k8s using **kubeadm**
+- To enable additional admission plugins or disabling default ones (left is when installed k8s manually, right is when installed using kubeadm):
+  ![Enable/Disable admission plugins](assets/images/127_enable_disable_admission_plugins.png)
 
 # Logging and Monitoring
 
@@ -1301,6 +1319,47 @@ In the above comamnds, you as administrator is responsible to final result. For 
   - The resize request will stay in *IngProgress* state if the current usage is higher than target resize amount, until it gets lower.
   - Windows Pods can't be resized
 
+### VPA (Vertical Pod Autoscaler)
+- VPA is not a k8s built-in feature. We should install it using Docs. It'll be deployed as Pods in kube-system namespace and CRDs and RBACs.
+- It observer metrics, adjust Pod resources if needs, and balance thresholds.
+- VPA will have 3 Pods in kube-system:
+  - VPA Recommender: Responsible for observing resources using Metrics Server. But doesn't make any change on the Pods, it only suggest changes.
+  - VPA Update: Detect Pods with sub-optimal usages and evicts them if needed.
+  - VPA Admission Controler: Responsible to make sure the newly created Pod will have required resources.
+  ![VPA Pods](assets/images/124_vpa_pods.png)
+- So, to find out any issues related to VPA, check the logs of proper HPA Pods. For example, `k logs HPA-upader-xxx` will show any issues related to evicting Pods.
+- VPA doesn't have imperative *create* command. The VPA definition file should be like this:
+  ```yaml
+  apiVersion: autoscaling.k8s.io/v1
+  kind: VerticalPodAutoscaler
+  metadata:
+    name: my-app-vpa
+  spec:
+    targetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: my-app
+    updatePolicy:
+      # Off: Only recommends, Does not change anything.
+      # Initial: Only changes on Pod creation. Not later. Means if the Deployment recreates Pods for any other reason, VPA will apply the scaling on them.
+      # Recreate: Evicts pods if usage goes beyond range.
+      # Auto: Updates existing pods to recommended numbers.
+      #    For now this behaves similar to Recreate. But when support for "In-place Update of Pod Resouces" is available that mode will be preferred.
+      updateMode: "Auto"
+    resourcePolicy:
+      containerPolicies:
+      - containerName: "my-app"
+        minAllowed:
+          cpu: "250m"
+        maxAllowed:
+          cpu: "2"
+        controlledResources: ["cpu"]
+  ```
+- Kubernetes has a safety feature that prevents removing the last pod of a deployment to avoid service downtime. When you have only 1 replica and VPA tries to evict it, Kubernetes blocks this action with the error message: "too few replicas". VPA wants to optimize your pod's resources but cannot because Kubernetes is protecting your service availability. As a result, VPA cannot apply its resource recommendations, and application cannot benefit from automatic resource optimization. So, to let VPA to terminate the Pod, scale up the deployment temporarily (using `kubectl scale ...`), and let VPA does it's job. Then you can scale back.
+
+- Comparing VPA and HPA:
+  ![Compare VPA vs HPA](assets/images/125_vpa_vs_hpa.png)
+  
 
 # Cluster Maintenance
 
