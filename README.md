@@ -934,6 +934,8 @@ In the above comamnds, you as administrator is responsible to final result. For 
 
 ## Admission Controllers
 - When we send a request to kubernetes (either using kubectl or the api call), it goes through api-server. api-server does authentication (using the certificate) and authorization (using Roles and Rolebindings). This authorization is a control gate, to make sure this user have access for the request he made (like create Pod, edit node, etc). But what if we want to have more complex checks or modifications? Like:
+  - Perform additional operations before the Pod gets created
+  - Validates configurations
   - Check if the image tag of the requested Pod creation is not `latest`
   - Check targeted namespace exists
   - Prevent using `runAsUser: 0` in Pod definition
@@ -941,14 +943,49 @@ In the above comamnds, you as administrator is responsible to final result. For 
   - Enforce using specific metadata labels
   - Define Default storage class
   - Define EventRateLimit to the api-server
+  - `NamespaceLifecycle`: It will make sure that requests to a non-existent namespace is rejected and that the default namespaces such as default, kube-system and kube-public cannot be deleted.
   - So on
 - You see, these checks can't be done using RBAC. In this case, we should use **Admission Controllers**
 ![Admission Controllers](assets/images/126_admission_controllers.png)
 - To see which admission plugins are enabled by default, run either:
   - `kube-apiserver -h | grep enable-admission-plugins` if you installed k8s manually
   - `kubectl exec kube-apiserver-controlplane -n kube-system -- kube-apiserver -h | grep enable-admission-plugins` if you installed k8s using **kubeadm**
-- To enable additional admission plugins or disabling default ones (left is when installed k8s manually, right is when installed using kubeadm):
+- To enable additional admission plugins or disabling default ones (left is when installed k8s manually, right is when installed using kubeadm), so if you also want to check what plugins are additionaly enabled, check this config:
   ![Enable/Disable admission plugins](assets/images/127_enable_disable_admission_plugins.png)
+
+#### Validating & Mutating Admission Controllers
+- There are 2 types of Admission Controllers:
+  - Mutating: The ones that modify the request.
+  - Validating: The ones that verify whether the request is doable or not.
+- k8s runs Mutating Admissions first, then Validatings.
+- But we can develop our own Admission Controllers as well, to implement custom validation or mutations. For doing this, we need to create an API app (using any langauge) that serves the required endpoints that **MutatingAdmissionWebhook** or **ValidatingAdmissionWebhook** needs to call against. Then either expose thie API on k8s cluster itself of somewhere out there, and then ask k8s to use that custom webhook:
+  1. Create the API application. It maybe something like this:
+    ![Custom mutating/validating webhook](assets/images/128_custom_mutating_webhook.png)
+  2. Deploy it in kubernetes or somewhere else.
+  3. Run a Validating or Mutating Webhook configuration like this:
+    ```yaml
+    apiVersion: admissionregistration.k8s.io/v1
+    kind: ValidatingWebhookConfiguration # Or `MutatingWebhookCongiguration
+    metadata:
+      name: "pod-policy.example.com"
+    webhooks:
+    - name: "pod-policy.example.com"
+      configClient:
+        # This part will be like this if API server is an internal Pod
+        service:
+          namespace: "webhook-namespace"
+          name: "webhook-service"
+        caBundle: "CjGhogslhs=0Gp...OTWPJ" 
+        # But it should be like the following if it's and external API server:
+        #    url: "https://external-server.example.com"
+      rules:
+      # Using rules, we limit what request this mutating/validating config should be applied to. So not to all requests.
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE"]
+        resources: ["pods"]
+        scope: ["Namespaced"]
+    ```
 
 # Logging and Monitoring
 
