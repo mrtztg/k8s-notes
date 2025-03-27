@@ -1244,12 +1244,12 @@ In the above comamnds, you as administrator is responsible to final result. For 
 
 - If a Pod is not READY, check `READY` column in `k get po`. If you see `Init:..` Means it's in stage or running initContainers. So, look at definition of its initContainers. If there is a problem in initContiner running, we can find it usineg `k logs {podName} -c initContainers`
 
-## Auth Scaling
+## Scaling
 
 - One big purpose of using orchestraion solutions is auto scaling. When it comes to k8s, we have Cluster scaling and Workload scaling. See the image below. Note that Vertical Cluster scaling is very uncommon approach, so it didn't came in the picture
   ![Scaling methods](assets/images/123_scaling_methods.png)
   
-  ### HPA (Horizontal Pod Autoscaler)
+### HPA (Horizontal Pod Autoscaler)
 - The manual way of Pods horizonal scaling is to monitor the Pods resource usage by `k top pod` and scale using `k scale deploy ...` whenever needed. But we can define auto scaler. We can use either imperative or declerative way:
   - `k autoscale deployment <my-deploy> --cpu-percent=50 --min=1 --max` . This means when CPU percent reaches 50%, add more pods. But maximum scale out will be to 10 Pods.
     
@@ -1280,6 +1280,27 @@ In the above comamnds, you as administrator is responsible to final result. For 
     - HPA target resource doesn't exist
     - so on
 - HPA uses the internal `metrics-server` to monitor Pods. But we can configure to use Custom Metrics Adapters, or even External Adapter, like a DataDog service which is outside of our Cluster. 
+
+### In-Place Resize of Pods
+- When we manually upadate the resources of a Pod of Deployment, the Pod gets recreated with the new resources. But there is a feature called In-Place resize (which is still in alpha state), that we can define whether change Pod resources without creating new one. To enable this feature, run `FEATURE_GATES=InPlacePodVerticalScaling=true`. Then modify the your deployment, which will be like this:
+  ```yaml
+  #...
+  containers:
+    - #...
+      resizePolicy:
+        - resourceName: cpu
+          restartPolicy: NotRequired
+        - resourceName: memory
+          restartPolidy: RestartContainer
+  ```
+- Note that In-Place resize some limitations like:
+  - Only CPU and memory resources can be changed
+  - Pod QoS class cannot be changed.
+  - InitContainer and EphermalContainers cannot be resized.
+  - Resource requests & limits cannot be removed once set.
+  - The resize request will stay in *IngProgress* state if the current usage is higher than target resize amount, until it gets lower.
+  - Windows Pods can't be resized
+
 
 # Cluster Maintenance
 
