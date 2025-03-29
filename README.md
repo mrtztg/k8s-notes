@@ -3023,7 +3023,7 @@ We can 2 concept in Docker:
   
   5. Check the status of DB service
      
-     ## Controlplane failures
+## Controlplane failures
 
 - To find such issues:
   
@@ -3039,13 +3039,28 @@ We can 2 concept in Docker:
      
      - Otherwise, check the service in the host machine: `sudo journalctl -u kube-apiserver`
        
-       ## Node failures
+## Node failures
 
 - First check Nodes using `k get no`, for the NoReady node:
   
-  1. Run `k describe <nodeName>`. check for `Conditions` section. Which one is `unknown`? Focus on that. For example, check `top` for available memory or `df -h` for available disk space
-  2. Then check the status of kubelet: `service kubelet status` or the service `sudo journalctl -u kubelet`
+  1. Run `k describe <nodeName>`. check for `Conditions` section. Which one is `unknown`? Focus on that. Take care of the `LastHeartbeatTime` colume as well.
+     1. In the case of Node crashes, bring it up again. You may need to check `top` for available memory or `df -h` for available disk space.
+  2. Then check the status of kubelet, ssh to that Node and run `systemctl status kubelet` (Or run `sudo journalctl -u kubelet | grep -i fail` on the master Node) if it's not active, just activate it. 
+    - If something is wrong with kubelet config, you can find the config in `/var/lib/kubelet/config.yaml`
   3. Check kubelet's certificate and make sure it's part of the right group, and it's not expired
+
+## CoreDNS failures
+- CoreDNS resources will be: a ServiceAccount, a ClusterRole, a ClusterRoleBinding, a Deployment, a ConfigMap, a Service.
+1. If CoreDNS Pod is pending, check network plugin is installed
+2. If CoreDNS Pod is in CrashLoopBackOff or Error state
+  - It might be because of and old Docker version with SELinux if have it in SELinux of the Nodes. To solve it, do one of the followings:
+    - Updrage Docker to a newer version
+    - Disable SELinux
+    - Modify CoreDNS deployment and set *allowPrivilegeEscalation* to true.
+  - Another reason can be because CoreDNS detects crash loop. There are lots of solutions to solve it:
+    - Add the following to your kubelet config to tell it to pass an alternative resolve.conf: `resolveConf: <pathToYourRealResolvConfFile>`. The path of resolv.conf file can be `/run/systemd/resolve.resolv.conf` in systems that use *systemd-resolved*
+    - Disable local DNS cache on host nodes, and restore `/etc/resolv.conf` to the original
+  - If CoreDNS Pods and service is working fine, check kube-dns service has correct endpoints of Pods.
 
 # Additional Commands
 
