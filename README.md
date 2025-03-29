@@ -3039,6 +3039,11 @@ We can 2 concept in Docker:
      
      - Otherwise, check the service in the host machine: `sudo journalctl -u kube-apiserver`
        
+## Networking troubleshooting
+- When you saw any networking related issue (like the service can't connect to Pod, or Pod can get IP, etc):
+  - Firstly, check status of all Pods in `kube-system` namespace.
+  - Then, check kube-system namespace and make sure there is a Network Plugin installed (Weave, Flannel or whatever).
+
 ## Node failures
 
 - First check Nodes using `k get no`, for the NoReady node:
@@ -3061,6 +3066,83 @@ We can 2 concept in Docker:
     - Add the following to your kubelet config to tell it to pass an alternative resolve.conf: `resolveConf: <pathToYourRealResolvConfFile>`. The path of resolv.conf file can be `/run/systemd/resolve.resolv.conf` in systems that use *systemd-resolved*
     - Disable local DNS cache on host nodes, and restore `/etc/resolv.conf` to the original
   - If CoreDNS Pods and service is working fine, check kube-dns service has correct endpoints of Pods.
+
+## Kube-proxy failures
+In case of kube-proxy failure:
+- Check `kube-proxy` pod is running
+- Check kube-proxy logs
+- Check its ConfigMap is correctly define and the *Config file* inside that Configmap is defined correctly
+- Check kube-config is defined in the ConfigMap
+- Check kube-pxory is running inside the container, using `netstat -plan | grep kube-proxy`
+
+# Other Topics
+
+## JSON PATH
+```json
+{
+  "store": {
+    "book": [
+      {
+        "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": 8.95
+      },
+      {
+        "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99
+      },
+      {
+        "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": 8.99
+      },
+      {
+        "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 22.99
+      }
+    ],
+    "bicycle": {
+      "color": "red",
+      "price": 19.95
+    }
+  }
+}
+```
+| **JSONPath**                      | **Meaning**                                                                               | **Example Result**                                                                                                                                              |
+|-----------------------------------|-------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `$`                               | The root element of the JSON document.                                                   | Returns the entire JSON object.                                                                                                                                 |
+| `$.*`                             | All direct children of the root.                                                         | Returns an array of the values under the root, e.g., `[{"book": [...]}, {"bicycle": {...}}]`.                                                                    |
+| `$..*`                            | Deep scan for all elements in the document.                                              | Returns every descendant element.                                                                                                                               |
+| `$.store.book`                    | Access the `book` array under `store`.                                                     | Returns the array of 4 book objects.                                                                                                                              |
+| `$.store.book[*]`                 | All items in the `book` array.                                                             | Returns all 4 book objects.                                                                                                                                       |
+| `$.store.book[*].author`          | All `author` properties in the `book` array.                                               | `["Nigel Rees", "Evelyn Waugh", "Herman Melville", "J. R. R. Tolkien"]`                                                                                           |
+| `$..author`                       | Deep scan for all `author` fields in the document.                                         | `["Nigel Rees", "Evelyn Waugh", "Herman Melville", "J. R. R. Tolkien"]`                                                                                           |
+| `$.store.book[0].title`           | The `title` of the first book object.                                                      | `"Sayings of the Century"`                                                                                                                                       |
+| `$.store.book[-1:].title`         | The `title` of the last book object (using negative slicing).                              | `["The Lord of the Rings"]`                                                                                                                                      |
+| `$.store.book[1:3]`               | Books from index 1 (inclusive) to 3 (exclusive).                                           | Returns the 2nd and 3rd books.                                                                                                                                    |
+| `$.store.book[1,3].title`         | Union of specific indices (1 and 3) for titles.                                            | `["Sword of Honour", "The Lord of the Rings"]`                                                                                                                   |
+| `$.store.book[::2]`               | Slice with a step of 2 (from start to end, stepping by 2).                                 | Returns the 1st and 3rd books.                                                                                                                                    |
+| `$.store.book[?(@.price < 10)]`   | Filter for books where `price` is less than 10.                                            | Returns the objects for `"Sayings of the Century"` and `"Moby Dick"`.                                                                                             |
+| `$.store.book[?(@.isbn)].title`   | All books that have an `isbn` property, returning only their titles.                       | `["Moby Dick", "The Lord of the Rings"]`                                                                                                                         |
+| `$..book[?(@.price > 10)].author` | Deep scan for `book` items with `price` > 10, then get their `author` property.            | `["Evelyn Waugh", "J. R. R. Tolkien"]`                                                                                                                           |
+| `$.store.bicycle.color`           | Access a simple nested field.                                                              | `"red"`                                                                                                                                                         |
+| `$['store']['book'][0]['author']` | Alternate bracket notation for properties/keys and array indices.                          | `"Nigel Rees"`                                                                                                                                                  |
+| `$..price`                        | Deep scan for all `price` fields in the document.                                          | `[8.95, 12.99, 8.99, 22.99, 19.95]`                                                                                                                               |
+| `$..book[0]`                      | Deep scan for any array named `book`, returning its first element.                         | Returns the first book object, e.g., `{"category": "reference", "author": "Nigel Rees", ...}`.                                                                    |
+
+- One usage of these JSON PATHs, is when getting resoruces details. E.g:
+  - `k get get nodes -o=custom-columns=<COLUMN NAME>:<JSON PATH>`
+    - E.g: `k get no -o=custom-columns=NODE:.metadata.name,CPU.status.capacity.cpu`
+  - `k get nodes --sorty-by=<JSON PATH>`. Note: Skip `$.items[*]` from the path. So inteas of `$.items[*].metadata.name`, it should be `--sort-by=.metadata.name`
+    - E.g: `k get no --sort-by=.metadata.name` or `k get po --sort-by=.status.capacity.cpu`
 
 # Additional Commands
 
