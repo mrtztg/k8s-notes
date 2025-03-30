@@ -2,8 +2,8 @@
 
 ### Kubernetes Architecture
 
-![Kubernetes Architecture](assets/images/01_kubernetes_architecture.png)
-![Kubenetes Architecture](assets/images/02_kubernetes_architecture_2.png)
+![Kubernetes Architecture](assets/images/01_kubernetes_architecture.jpg)
+![Kubenetes Architecture](assets/images/02_kubernetes_architecture_2.jpg)
 
 - **Nodes** are physical servers, which can be on cloud or on-premise
 - **Worker Nodes** host application as container s
@@ -17,7 +17,7 @@
 - CRI (Container Runtime Interface) is a standard that any container (like Docker, Containerd, rkt) should’ve implement in their development to be able to used in k8s.
 - `containerd` was container part of Docker. But became an independent part a few years ago. Because with k8s we don’t need the components of Docker (like CLI, API, BUILD, AUTH, etc) `containerd`  itself will be used in k8s, not the whole Docker. `containerd` can be installed separately without Docker
 - Normally, `containerd` has `ctr` command, which has only very basic commands, which is okay when using k8s. Because k8s will be a middleman. But for debugging purposes, we can use either `nerdctl` which adds commands very similar to Docker commands to `containerd`, or we can use `crictl`, which is compatible with all `CRI` compatible containers systems including `containerd` . It commands also very similar to Docker commands
-  ![CRI Clients](assets/images/03_cri_clients.png)
+  ![CRI Clients](assets/images/03_cri_clients.jpg)
 
 ### ETCD
 
@@ -26,15 +26,15 @@
 - In k8s, `ETCD` stores information like Nodes, PODs, Configs, Secrets, Accounts, Roles, Bindings, so on. So, setting is only permitted when they reflect on etcd
 - If we installed `etcd` manually, we can change the port of `etcd` panel using `etcd.service` file:
 
-![etcd.service](assets/images/04_etcd_service.png)
+![etcd.service](assets/images/04_etcd_service.jpg)
 
 - - But if we we installed k8s using `kubeadm`, it already installed etcd as a pod. We can explore database of etcd using etcdctl utility within this pod. For example for getting list of all keys should use `kubectl exec etcd-master -n kube-system ectdctl get / --prefit -keys-only`
     
-    ![etcd pod in kubeadm setup](assets/images/05_etcd_kubeadm_pod.png)
+    ![etcd pod in kubeadm setup](assets/images/05_etcd_kubeadm_pod.jpg)
 
 - In HA environment, your etcd in each instance should be aware of each other
 
-![etcd config in manual setup](assets/images/06_ectd_manual_service.png)
+![etcd config in manual setup](assets/images/06_ectd_manual_service.jpg)
 
 - To find out whether the ETCD of a node is Stacked (inside the node itself) or an external ETCD, check with 2 methods:
   
@@ -52,13 +52,13 @@
   - But also, we can use **HTTP requests** directly to `kube-apiserver`, instead of using `kubectl`
 - If we installed k8s using `kubeadm`, `kube-apiserver` is installed as a pod. We can see its options within the pod definitions `cat /etc/kubernetes/manifests/kube-apiserver.yaml`
 
-![Kube Api-Server Pod in Kubeadm setup](assets/images/07_kube_apiserver_pod_kubeadm.png)
+![Kube Api-Server Pod in Kubeadm setup](assets/images/07_kube_apiserver_pod_kubeadm.jpg)
 
-![Kube Api-Server yaml in Kubeadm setup](assets/images/08_kub_apiserver_adm_setup_yaml.png)
+![Kube Api-Server yaml in Kubeadm setup](assets/images/08_kub_apiserver_adm_setup_yaml.jpg)
 
 - But if installed k8s manually, we should also install `kube-apiserver` manually. Then we can find its options in `cat /etc/systemd/system/kube-apiserver.service`
 
-![Kube Api-Server in manual setup](assets/images/09_kube_apiserver_manual_setup.png)
+![Kube Api-Server in manual setup](assets/images/09_kube_apiserver_manual_setup.jpg)
 
 - Also we can use `ps -aux | grep kube-apiserver` to see running processes of ApiServer
 - When we send a request to kube-apiserver (either via HTTP or `kubectl` ) it follows the following flow by `kube-apiserver`  (this example is pod create command)
@@ -73,13 +73,13 @@
   - `kubelet` will create the proper containers and the back the status to `kube-apiserver`
     - `kube-apiserver`  updates etcd
 
-![k8s madness](assets/images/10_k8s_madness.png)
+![k8s madness](assets/images/10_k8s_madness.jpg)
 
 ### Kube Controller Manager
 
 - Every intelligence in k8s sits inside `Kube Controller Manager`. It has lots of controllers including the one in picture below. They’re all enabled by default when we install Kube Controller Manager, but we can disable any of them
 
-![Kube Controller Manager](assets/images/11_controller_manager.png)
+![Kube Controller Manager](assets/images/11_controller_manager.jpg)
 
 - Controllers are like officers in master ship. Each Controller is responsible for a set of things in workers. One officers is responsible whenever worker ships comes and leave, so on.
   So, in kubernetes, Controller is responsible to make sure status of different components are in desired status (**Watch Status, Remediate Situation)**. Eg:
@@ -91,15 +91,15 @@
 
 - Its option is located in `controller-manager-master`  pod if we used `kubeadm` or in service file if we installed manually.
   
-    ![Controller Manager service in manual setup](assets/images/12_controller_manager_manual_service.png)
+    ![Controller Manager service in manual setup](assets/images/12_controller_manager_manual_service.jpg)
   
     When we install k8s and Controller manager manually
 
-![Controller manager pod in Kubeadm setup](assets/images/13_controller_manager_pod.png)
+![Controller manager pod in Kubeadm setup](assets/images/13_controller_manager_pod.jpg)
 
 1. When install using kubeadm
 
-![Controller manager pod yaml in Kubeadm setup](assets/images/14_controller_manager_pod_yaml.png)
+![Controller manager pod yaml in Kubeadm setup](assets/images/14_controller_manager_pod_yaml.jpg)
 
 2. To see options in k8s pod
 - To see running `controller-manager` processes, run the following command on master Node: `ps -aux | grep kube-controller-manager`
@@ -119,11 +119,11 @@
   But the service itself cannot join pod network by itself, because its just a visual network which lives in k8s memory, not actual component.
   So, how services can be joined to pods network? Using **Kube-proxy**. Kube-proxies run  on each Node, and whenever a new services gets created, it creates proper rules (like using `iptables`) on each Node to forward traffic to those services to the backend pods.
 
-![Kube-proxy](assets/images/15_kube_proxy.png)
+![Kube-proxy](assets/images/15_kube_proxy.jpg)
 
 - You can install `kube-proxy` manually if you installed k8s manually. Or kubeadm will deploy it as Pod
 
-![Kube-proxy Pod](assets/images/16_kube_proxy_pod.png)
+![Kube-proxy Pod](assets/images/16_kube_proxy_pod.jpg)
 
 ## Kubenetes Pods
 
@@ -132,11 +132,11 @@
 - For **scaling purpose, we shouldn’t deploy another container instance in the same Pod**. Instead, it should be a Pod with the new instance.
   If our Node doesn’t have enough required capacity for adding more instances, we can add Pod to the next Nodes.
 
-![k8s Pods](assets/images/17_k8s_pods.png)
+![k8s Pods](assets/images/17_k8s_pods.jpg)
 
 - Sometimes (rarely) we may need to have more than 1 instance in a Pod, like when our main app needs a helper Sqlite DB for its quick operations and that DB isn’t needed to be accessible for other instances or other services. These instances are in the same Pod, and their network is local and isolated. Also, they have access to each other’s storage.
 
-![Multiple containers in a Pod](assets/images/18_k8s_containers_in_pod.png)
+![Multiple containers in a Pod](assets/images/18_k8s_containers_in_pod.jpg)
 
 - K8s considers all instances inside a Pod as one object. It shares volumes and volumes of Pod’s instances to each other automatically, it maps them to each other, so on. So, it removes, create the whole Pod completely. It means, for example when the helper DB or the worker app (which sits in the same Pod) gets unhealthy, k8s will kill not only the worker app in that Pod, but even helper DB instance
 - For creating Pods, we run the following cmd: `kubectl run nginx --image=nginx` .
@@ -196,11 +196,11 @@ spec:
   
   1. Maintain desired number of replicas to make sure our app is always available. Replica number can be 1 (means only one instance of that app is running at the time). But 2 is better if we have HA (high availability) in mind.
      
-     ![ha using replica](assets/images/19_highavailability_using_replica.png)
+     ![ha using replica](assets/images/19_highavailability_using_replica.jpg)
   
   2. Load balancing & Scalability. ReplicationController will make sure request load will splitted in all replicas. It can even deploy replicas in other Nodes if required
      
-     ![scalability using replica](assets/images/20_scalability_using_replica.png)
+     ![scalability using replica](assets/images/20_scalability_using_replica.jpg)
 
 - **ReplicationController** and **ReplicaSet** does the same thing, but they're not the same. **ReplicaSet** is a newer version and have more capability, like `selector` in definition file.
 
@@ -294,7 +294,7 @@ spec:
 
 - Deployments in a higher hierarchy to ReplicaSet
   
-  ![Deployments](assets/images/21_deployments.png)
+  ![Deployments](assets/images/21_deployments.jpg)
 
 - Definition file of Deployments is very similar to ReplicaSet, except the `kind` field which should be `Deployment`
 
@@ -310,32 +310,32 @@ spec:
 
 - Kubernetes services enables communication between the components inside and outside of application. It helps to connect applications to other applications or users, like communication between front-end and backend, or between user and frontend
   
-  ![Services](assets/images/22_services.png)
+  ![Services](assets/images/22_services.jpg)
 
 - Normally, the application inside k8s is not accessable from outside, excpet if we connect to k8s Node via SSH. 
   
-  ![Connect to Pod via SSH](assets/images/23_connect_to_pod.png)
+  ![Connect to Pod via SSH](assets/images/23_connect_to_pod.jpg)
   
   - But using service, we can give access:
   
-  ![Access Pod via Service](assets/images/24_access_pod_via_service.png)
+  ![Access Pod via Service](assets/images/24_access_pod_via_service.jpg)
 
 - **Services Type**:
   
   1. **NodePort**: To give incoming access to the Pod from ouside of the Node
      
-     ![NodePort Service](assets/images/25_node_port.png)
+     ![NodePort Service](assets/images/25_node_port.jpg)
      
      - NodePort range is `30_000` to `32_767`
   
   2. **CluesterIP**: Create virtual IP inside cluster that gives a cluster-wide IP to the Pod(s). This enables communication between Pods like set of front-end servers with back-end servers.
-      ![ClusterIP Service](assets/images/27_clusterip.png)
+      ![ClusterIP Service](assets/images/27_clusterip.jpg)
   
   3. **LoadBalancer**: Enables loadBalancer in the supported cloud providers (like AWS, GCP, Azure). For example we pub AWS Application Load Balancer in front and Kubernetes service (with type=LoadBalancer) will do the rest of configuration in a way that the traffic will be received through the domain that is set to AWS ALB, and load will be balanced.
-     ![Load Balancer Serivce](assets/images/28_loadbalancer_service.png)
+     ![Load Balancer Serivce](assets/images/28_loadbalancer_service.jpg)
      
      - Note that we still can access to underlying Pods using IP:PORT of any of the Pods as example below. But that't not our desired way of accessing. We want a single URL.
-       ![Service without endpoint](assets/images/29_service_without_endpoint.png)
+       ![Service without endpoint](assets/images/29_service_without_endpoint.jpg)
 
 - Sample of definition file:
   
@@ -360,7 +360,7 @@ spec:
 
 - If there are more than one Pod for the specifiec 'Selector', the service will act as the load balancer and will split traffic to all targets using `Random` Algorithm. These multiple pods can be in one Node, or in multiple Nodes. Then we can use IP of any of the target Nodes to access underlying Pods of service. In the following picture `curl http://192.168.1.2:300008` or `curl http://192.168.1.3:300008` or `curl http://192.168.1.4:300008`
   
-  ![Multi Node, Multi Pod as Service Target](assets/images/26_service_target_multi_node.png)
+  ![Multi Node, Multi Pod as Service Target](assets/images/26_service_target_multi_node.jpg)
 
 - To create service using definition file, use `kubectl create -f my-service.yaml` and for listing the running services: `kubectl get services` or `kubectl get svc`
 
@@ -379,7 +379,7 @@ spec:
 ## Namespaces
 
 - Namespaces is like houses. People in the house (family members) call each other with their first name only. They all have access to shared resources. But when family members want to call members of other family, they should call their fullname.
-  ![Family like Namespaces](assets/images/30_namespaces_family.png)
+  ![Family like Namespaces](assets/images/30_namespaces_family.jpg)
 
 - Namespeces isolates its components (like Pods, etc) so they can't be altered by mistake. For example, we won't remove Pods in `prod` namespaces instead of `dev` by mistake.
 
@@ -436,7 +436,7 @@ spec:
 ## Namescope bound vs Cluster scoped
 
 - Some resources are bounded to namespaces. But others are in Cluster level and can't be bounded to a specific namespace. Some examples are:
-  ![Cluster vs Namespace scope](assets/images/68_cluster_vs_namespace_scope.png)
+  ![Cluster vs Namespace scope](assets/images/68_cluster_vs_namespace_scope.jpg)
 
 - To see Cluster scope run `kubectl api-resources --namespaced=false` and for Namespace scope resources run `kubectl api-resources --namespaced=true`
 
@@ -466,7 +466,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - `kubectl apply -f nginx.yaml` . It's intelligent and will check resource exists before running. It's like *Upsert* in SQL.
   - `kubectl apply -f /path/to/config-files` . To apply for all definition files in a path
 - When we use `apply` command, k8s compares the *Live object configuration* with the local file. Then, it updates the live object. But before updating, it creates a copy of *Live object configuration* and put in `annotation` section of the live object configuration. So we can always see what was the latest config before the current one:
-  ![Applied Last Command](assets/images/31_appy_last_applied.png)
+  ![Applied Last Command](assets/images/31_appy_last_applied.jpg)
 
 ## Labels & Selectors
 
@@ -610,7 +610,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
   ```
 
 - Master Node in k8s is also a Node, line Worker Nodes. Why scheduler doesn't schedule any Pods on Master Node? Because Master Node has a taint on it (try to not modify this taint):
-  ![Master Node's Taint](assets/images/32_mater_node_taint.png)
+  ![Master Node's Taint](assets/images/32_mater_node_taint.jpg)
 
 - To remove taint from a Node, either use "key" or "key+effect" with "-" at the end:
   
@@ -695,7 +695,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - ## General
 
 - Think about the desired deployment as picuture below. We can to colored Pods to be places in their equivalent Node. But colorless Pods should be places in any of color-less Nodes. Solve this problem
-  ![NodeAffinity vs TaintTolerant](assets/images/33_node_affinity_vs_taint_tolerant.png)
+  ![NodeAffinity vs TaintTolerant](assets/images/33_node_affinity_vs_taint_tolerant.jpg)
 
 ## Resource Requirements
 
@@ -707,7 +707,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 
 - You can define both required and limits, or one of them, or neither. Usually (but not always) setting Requests without Limits is the ideal config, because we let the container to get as much as resource it needs, but we make sure all other containers also will get minimum required resources.
 
-- ![Limit Requests and Limites Behaviour](assets/images/34_cpu_limit_request_behaviour.png)
+- ![Limit Requests and Limites Behaviour](assets/images/34_cpu_limit_request_behaviour.jpg)
 
 - To define required resources and/or limits:
   
@@ -802,7 +802,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
   ```
 
 - Run `k create -f my-daemon-set.yaml` to create and use `k get daemonset` to list.
-  ![Daemon Sets](assets/images/35_daemonsets.png)
+  ![Daemon Sets](assets/images/35_daemonsets.jpg)
 
 ## Static Pods
 
@@ -812,16 +812,16 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - You can create Pods this way, not deployment, replicaset or services
 - To define this staticPods directory, we'll jump in `kubelet.service` (using `ps -aux | grep kubelet`) file of the Node, and set path in `--pod-manifest-path`. Or create a separated config file with `staticPodPath` inside and pass its path inside `--config` of `kubelet.service`.
 
-![Kubelet Pod Manifest](assets/images/36_kubelet_pod_manifest.png)
+![Kubelet Pod Manifest](assets/images/36_kubelet_pod_manifest.jpg)
 
-![Kubelet Pod path](assets/images/37_kubelet_config_file.png)
+![Kubelet Pod path](assets/images/37_kubelet_config_file.jpg)
 
 - If we don't have k8s cluster yet (just have Kubelet), we can use `docker ps` if you're running Pods on Docker. Or `crictl ps` or `nerdctl ps` if your containerisation is others like containerd
 - Actually *Kubelet* can create Pods using Static Pods config, and `api-server` of Master Node at the same time. But the static Pods are Read-Only from *kube-apiserver*. We can see them using `k get pods`, but we can't modify or delete them using `kubectl`. If we delete it, Kubelet will create another one.
 - In `kubectl get pods -A -o wide`, the static Pods are most likely the ones that have `-{nodeName}` suffix. Like `-controlplane`, if it's placed in *controlplane* Node. But to make 100% sure the Pod is static, get yaml of Pod using `kubectl get pod {PodName} -n {Namespace} -o yaml` and look for `ownerReferences -> kind`. If the value is `Node`, it's StaticPod, if is anything else (like `ReplicaSet`), it's not then.
 - One usecase of Static Pod? Actually Kubeadm installs components of MasterNode (like apiserver, etcd, controller-manager) in this way. So, if any of these services crash, Kubelet will re-create them
 
-![Static Pod use case](assets/images/38_static_pod_usecase.png)
+![Static Pod use case](assets/images/38_static_pod_usecase.jpg)
 
 - Difference between Static Pod and DaemonSet:
   
@@ -843,7 +843,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
   - And so on
 
 - For deploying Kube-scheduler in old fashio way, config file for scheduler would be like `my-scheduler-config.yaml` file below. And for deploying the Scheduler, after downloading the KubeScheduler binary, edit service to be like this:
-  ![Deploy Additional Scheduler](assets/images/39_deploy_additional_scheduler.png)
+  ![Deploy Additional Scheduler](assets/images/39_deploy_additional_scheduler.jpg)
 
 - Today, 99% of the time we do deploy scheduler as Pod, like all other kubeadm's controlplane controllers. The Pod definition will be like this:
   
@@ -898,7 +898,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
   Note that the Pod will remain if *Pending* state if scheduler was not configured correctly.
 
 - If we want to see which scheduler the Pod is using, run `kubectl get events -o wide` and see *SOURCE* column:
-  ![Get Events](assets/images/40_getevents.png)
+  ![Get Events](assets/images/40_getevents.jpg)
 
 - We can also see scheduler logs if we face any issues in Scheduler, using `kubectl logs my-custom-scheduler -n=kube-system`
 
@@ -927,10 +927,10 @@ In the above comamnds, you as administrator is responsible to final result. For 
     - Plugin *NodeResourcesFit*: This plugin also have job in Scoring step.
     - Plugin *ImageLocality*: Score the Nodes in higher priority if they already have the required image of the Pod container.
   - Binding: Finaly bounds the Pod to the Node.
-    ![Scheduler Plugins and Extensions](assets/images/41_scheduler_plugins_extensions.png)
+    ![Scheduler Plugins and Extensions](assets/images/41_scheduler_plugins_extensions.jpg)
 - Kubernetes does all the scheduling process using Plugins and Extensions. k8s is highly customisable. We can modify these scheduler plugins and extensions and where and how they should be placed.
 - For configure plugins in schedulers:
-  ![Scheduler Plugins config](assets/images/42_scheduler_plugins_config.png)
+  ![Scheduler Plugins config](assets/images/42_scheduler_plugins_config.jpg)
 
 ## Admission Controllers
 - When we send a request to kubernetes (either using kubectl or the api call), it goes through api-server. api-server does authentication (using the certificate) and authorization (using Roles and Rolebindings). This authorization is a control gate, to make sure this user have access for the request he made (like create Pod, edit node, etc). But what if we want to have more complex checks or modifications? Like:
@@ -946,12 +946,12 @@ In the above comamnds, you as administrator is responsible to final result. For 
   - `NamespaceLifecycle`: It will make sure that requests to a non-existent namespace is rejected and that the default namespaces such as default, kube-system and kube-public cannot be deleted.
   - So on
 - You see, these checks can't be done using RBAC. In this case, we should use **Admission Controllers**
-![Admission Controllers](assets/images/126_admission_controllers.png)
+![Admission Controllers](assets/images/126_admission_controllers.jpg)
 - To see which admission plugins are enabled by default, run either:
   - `kube-apiserver -h | grep enable-admission-plugins` if you installed k8s manually
   - `kubectl exec kube-apiserver-controlplane -n kube-system -- kube-apiserver -h | grep enable-admission-plugins` if you installed k8s using **kubeadm**
 - To enable additional admission plugins or disabling default ones (left is when installed k8s manually, right is when installed using kubeadm), so if you also want to check what plugins are additionaly enabled, check this config:
-  ![Enable/Disable admission plugins](assets/images/127_enable_disable_admission_plugins.png)
+  ![Enable/Disable admission plugins](assets/images/127_enable_disable_admission_plugins.jpg)
 
 #### Validating & Mutating Admission Controllers
 - There are 2 types of Admission Controllers:
@@ -960,7 +960,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - k8s runs Mutating Admissions first, then Validatings.
 - But we can develop our own Admission Controllers as well, to implement custom validation or mutations. For doing this, we need to create an API app (using any langauge) that serves the required endpoints that **MutatingAdmissionWebhook** or **ValidatingAdmissionWebhook** needs to call against. Then either expose thie API on k8s cluster itself of somewhere out there, and then ask k8s to use that custom webhook:
   1. Create the API application. It maybe something like this:
-    ![Custom mutating/validating webhook](assets/images/128_custom_mutating_webhook.png)
+    ![Custom mutating/validating webhook](assets/images/128_custom_mutating_webhook.jpg)
   2. Deploy it in kubernetes or somewhere else.
   3. Run a Validating or Mutating Webhook configuration like this:
     ```yaml
@@ -1024,11 +1024,11 @@ In the above comamnds, you as administrator is responsible to final result. For 
   2. Rolling Update: The Pods get updated to the new version 1 by 1. This strategy makes sure not all the application is down during the update. (k8s does this by creating new replicaSet inside itself, then reduces number or replicas of old replicaSet one by one, and simultaneously increase replicas of new ReplicaSet one by one).
      - This strategy is default deployment strategy
 
-![Rollout Strategies](assets/images/43_rollout_strategies.png)
+![Rollout Strategies](assets/images/43_rollout_strategies.jpg)
 
-![Rollout Behind the Scenes](assets/images/44_rollout_behind_scenes.png)
+![Rollout Behind the Scenes](assets/images/44_rollout_behind_scenes.jpg)
 
-![Deployment ReplicaSets](assets/images/45_deployment_replicaSets.png)
+![Deployment ReplicaSets](assets/images/45_deployment_replicaSets.jpg)
 
 - If we only want to change the image of Pods in the Deplooyment, run `k set image deploy/{deploymentName} {containerName}={desireImageName:tag}` like `k set image deploy/my-app nginx-controller=nginx:1.9.0`
 
@@ -1091,7 +1091,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
     ### Back to k8s
 
 - In k8s Pod definition file, for overriding `ENTRYPOINT` of container we fill `command` field, for overriding `CMD`, we fill `args`:
-  ![Command Arguments](assets/images/46_command_arguments.png)
+  ![Command Arguments](assets/images/46_command_arguments.jpg)
   
   - Values array of both `command` and `args` can be in the one of the following formats:
     
@@ -1303,7 +1303,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 ## Scaling
 
 - One big purpose of using orchestraion solutions is auto scaling. When it comes to k8s, we have Cluster scaling and Workload scaling. See the image below. Note that Vertical Cluster scaling is very uncommon approach, so it didn't came in the picture
-  ![Scaling methods](assets/images/123_scaling_methods.png)
+  ![Scaling methods](assets/images/123_scaling_methods.jpg)
   
 ### HPA (Horizontal Pod Autoscaler)
 - The manual way of Pods horizonal scaling is to monitor the Pods resource usage by `k top pod` and scale using `k scale deploy ...` whenever needed. But we can define auto scaler. We can use either imperative or declerative way:
@@ -1364,7 +1364,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
   - VPA Recommender: Responsible for observing resources using Metrics Server. But doesn't make any change on the Pods, it only suggest changes.
   - VPA Update: Detect Pods with sub-optimal usages and evicts them if needed.
   - VPA Admission Controler: Responsible to make sure the newly created Pod will have required resources.
-  ![VPA Pods](assets/images/124_vpa_pods.png)
+  ![VPA Pods](assets/images/124_vpa_pods.jpg)
 - So, to find out any issues related to VPA, check the logs of proper HPA Pods. For example, `k logs HPA-upader-xxx` will show any issues related to evicting Pods.
 - VPA doesn't have imperative *create* command. The VPA definition file should be like this:
   ```yaml
@@ -1396,7 +1396,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - Kubernetes has a safety feature that prevents removing the last pod of a deployment to avoid service downtime. When you have only 1 replica and VPA tries to evict it, Kubernetes blocks this action with the error message: "too few replicas". VPA wants to optimize your pod's resources but cannot because Kubernetes is protecting your service availability. As a result, VPA cannot apply its resource recommendations, and application cannot benefit from automatic resource optimization. So, to let VPA to terminate the Pod, scale up the deployment temporarily (using `kubectl scale ...`), and let VPA does it's job. Then you can scale back.
 
 - Comparing VPA and HPA:
-  ![Compare VPA vs HPA](assets/images/125_vpa_vs_hpa.png)
+  ![Compare VPA vs HPA](assets/images/125_vpa_vs_hpa.jpg)
   
 
 # Cluster Maintenance
@@ -1414,7 +1414,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 ## Kubernetes Cluster Upgrade
 
 - Consider that k8s supports cluster versions only for 14 months, we need to take care of upgrading. But there is a note here. Because we need to upgrade the different parts of k8s seperately (to keep our server alive), we should take care of different parts' version compatibility.
-  ![Cluster version format](assets/images/47_cluster_version_format.png)
+  ![Cluster version format](assets/images/47_cluster_version_format.jpg)
 
 - If `api-server`'s version = `1.10.x`
   
@@ -1435,11 +1435,11 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - After we upgrade Master Node, we have 3 strategies to upgrade Worker Ndoes
   
   1. Upgrade all Worker Nodes at once. This will make our whole app down during the upgrade. So, it's not a good strategy if we don't want our users lose access to our app
-     ![Worker Node Upgrade Strategy 1](assets/images/48_worker_node_upgrade_strategy1.png)
+     ![Worker Node Upgrade Strategy 1](assets/images/48_worker_node_upgrade_strategy1.jpg)
   2. Upgrade Nodes one by one. So, we'll `drain` one Node, upgrade it, then `urcordon` it.
-     ![Worker Node Upgrade Strategy 2](assets/images/48_worker_node_upgrade_strategy2.png)
+     ![Worker Node Upgrade Strategy 2](assets/images/48_worker_node_upgrade_strategy2.jpg)
   3. Create new Node with new version before `drain`ing each Node. So, its load (Pods) will be moved to the newly created Pod
-     ![Worker Node Upgrade Strategy 3](assets/images/48_worker_node_upgrade_strategy3.png)
+     ![Worker Node Upgrade Strategy 3](assets/images/48_worker_node_upgrade_strategy3.jpg)
 
 - For upgrading cluster using `kubeadm`, run `kubeadm upgrade plan`. It'll show the next command we should run for upgrade. So, after this command, for example we want to upgrade from `v1.10.0` to `v1.11.0`:
   
@@ -1507,7 +1507,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
              --endpoints={endPoint} ## Can find it in '--advertise-client-urls (for access from outside) or --listen-client-urls (for access from inside)'
       ```
       
-      ![ETCDCTL params](assets/images/49_etcdctl_params.png)
+      ![ETCDCTL params](assets/images/49_etcdctl_params.jpg)
   
   - Persistent Volumes (if we have any)
 
@@ -1538,7 +1538,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - For bots, we can do it using `kubectl create serviceaccount {serviceAccountName}`. But for admins and developers, we need other solutions like storing username passwords in a file.
 
 - api-server authenticates the user before processing request:
-  ![api server auth](assets/images/50_apiserver_auth.png)
+  ![api server auth](assets/images/50_apiserver_auth.jpg)
 
 - For defining auth user&pass using a file, we create a CSV file with 3 column: password,username,userId,group (group column is optional) like this:
   
@@ -1549,9 +1549,9 @@ In the above comamnds, you as administrator is responsible to final result. For 
   ```
   
   - Then we pass the path of that file in kube-apiserver.service if we installed k8s manually, or api-server's Pod definition if we installed using kubeadm:
-    ![apiserver userpass auth](assets/images/51_apiserver_file_auth.png)
+    ![apiserver userpass auth](assets/images/51_apiserver_file_auth.jpg)
   - Now for connecting to this apiserver, specify username&pass like this:
-    ![userpass in curl](assets/images/52_userpass_in_curl.png)
+    ![userpass in curl](assets/images/52_userpass_in_curl.jpg)
 
 - For defining auth using user&token file, create similar CSV file, but first column should be token:
   
@@ -1560,7 +1560,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
     ```
   - Then pass it in kube-apiserver config with `--token-auth-file` key.
   - For connecting to this apiserver, use:
-    ![usertoken in curl](assets/images/53_usertoken_in_curl.png)
+    ![usertoken in curl](assets/images/53_usertoken_in_curl.jpg)
 
 - Note: Basic authentication (either user&pass or user&token) is not a secure and recommended. It's deprecated in v1.19.
 
@@ -1571,12 +1571,12 @@ In the above comamnds, you as administrator is responsible to final result. For 
   - CA certificate: CA uses this to sign the certificates.
   - Server certificate: Server uses this to decrypt data received from client
   - Client certificate: Client uses this to decrypt data received from server
-    ![3 certificates](assets/images/54_3_certificates.png)
+    ![3 certificates](assets/images/54_3_certificates.jpg)
 
 - Communication between all k8s components need to be secured using TLS.
 
 - What components in k8s will have "Server Certificate"?
-  ![Client Certificates for Clients](assets/images/55_client-certificates-for-clients.png)
+  ![Client Certificates for Clients](assets/images/55_client-certificates-for-clients.jpg)
 
 - There are different tools to generate certificates. We use OPENSSL
 
@@ -1632,18 +1632,18 @@ In the above comamnds, you as administrator is responsible to final result. For 
   
   - All steps are similar to previous. `/CN=etcd-server`.
   - If our ETCD is deployed as a cluster across multiple servers for HA purpose, to secure connection between members of the cluster, we should also create *peer* certificate for each.
-    ![ETCD peer certificates](assets/images/56_etcd_peer_certificates.png)
-    ![Peer crt in config](assets/images/57_peer_crt_in_config.png)
+    ![ETCD peer certificates](assets/images/56_etcd_peer_certificates.jpg)
+    ![Peer crt in config](assets/images/57_peer_crt_in_config.jpg)
 
 - For *KUBE API SERVER*, because different services and different people may know it by different names, we should add the following names addtional to the name we choose (like `KUBE-API-SERVER`) in the license: `kubernetes`, `kubernetes.default`, `kubernetes.default.svc` and `kubernetes.default.svc.cluster.local` and `<IpAddressesOfServerBehindApiServer>`. To create such certificate request (csr):
-  ![kube-api-server-certificate](assets/images/58_kube-api-server-certificate.png)
+  ![kube-api-server-certificate](assets/images/58_kube-api-server-certificate.jpg)
   
   - Then pass these generated certificates, and client certificates for communicating with ETCD and kubelet:
-  - ![pass-kubeapiserver-certificates](assets/images/59_pass_kubeapiserver_certificates.png)
+  - ![pass-kubeapiserver-certificates](assets/images/59_pass_kubeapiserver_certificates.jpg)
 
 - For *KUBELET* nodes (to act as server), the steps are similar, but ther /CN should be node01, node02, so on. Once the certificates are created, use them on `kubelet-config.yaml` for each node in the cluster:
   
-  - ![kubelet certificate config](assets/images/60_kubelet_certificate_config.png)
+  - ![kubelet certificate config](assets/images/60_kubelet_certificate_config.jpg)
 
 - But we should also create client certificate for Nodes (to act as client agains apiserver). But because apiserver should verify these nodes and their access levels, their /CN should be like `system:node:node01`, `system:node:node02` and so on. And should have group (`/O`) `SYSTEM:NODES`
 
@@ -1651,12 +1651,12 @@ In the above comamnds, you as administrator is responsible to final result. For 
   
   - First find the path the cerificate. E.g. For api-server it locates in `/etc/systemd/system/kube-appiserver.service` if you insatlled k8s manually, and locates in `/etc/kubernetes/manifests/kube-apiserver.yaml` (static pods definition location)
   - Now, to see information of certificate file, run `openssl x509 -in <path-to-crt> -text -noout`. Verify the fields `Issuer`, `Not After`, `Subject`, `Alternate Name` fields very carefully. For example, *Issuer* should be *kubernetes* not something like *self*, or Expiration fields shouldn't be passed. Something like image below:
-    ![View certificate info](assets/images/61_view_certificate_info.png)
+    ![View certificate info](assets/images/61_view_certificate_info.jpg)
 
 - If ETCD has its own CA (separated from the CA for other components), *api-server* we should pass ETCD's CA on `--etcd-cafile` paremeter instead of main CA.
 
 - If you ran any issues with certificates (for example for etcd component), checkout the logs. If you installed k8s manually, check `journalctl -u <componentName>.service -l` or if you installed using kubeadm, run `kubectl logs <etcd-pod-name>`. In a case kube *kubectl* command have issue, you can see log directly from Docker using `docker logs <contrainerId>` (find containerId by running `docker ps -a`):
-  ![certificate logs](assets/images/62_certificate_logs.png)
+  ![certificate logs](assets/images/62_certificate_logs.jpg)
 
 - If in `kube-apiserver` logs we see an error related to `:2379` (or another port if we're not using default port for ETCD), think about ETCD. You may need to jump in logs of ETCD to find the issue.
 
@@ -1690,7 +1690,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
   - Now, after approving the CSR, run `kubectl get csr <csrName> -o yaml` and copy value inside **Status** > **Certificate** and decode it using `echo "<certValue>" | base64 --decode`.
   - This decoded value is certificate. Share it with the user
 - This certificate signing is done by *CSR-APPROVING* and *CSR-SIGNIING* controllers inside *Controller Manager*. So, Controller Manager should have CA key and cert configured:
-  - ![Controller Manager Certificate](assets/images/63_controller_manager_config_certificate.png)
+  - ![Controller Manager Certificate](assets/images/63_controller_manager_config_certificate.jpg)
 
 ## Config file
 
@@ -1719,7 +1719,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
   - Users: Note that, we're just using already created user, not creating a user.
   
   - Contexts: To define which user connects to which cluster. Context can be many to many connection between cluster and user. Means we can define cluster for a specific user and vice versa.
-    ![Kube Config Diagram](assets/images/64_kube-config-diagram.png)
+    ![Kube Config Diagram](assets/images/64_kube-config-diagram.jpg)
   
   - Now, you can run your commands using the config file like `kubectl get pods --kubeconfig <path-to-config>`. But if your config file path be `$HOME/.kube/config` path, you don't need to pass --kubeconfig and just run `kubectl get pods`. You see? kubeadm and minikube created this file for us. That's the reason we don't need to define any certificate in `kubectl get pods` command.
     ```yaml
@@ -1793,7 +1793,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 
 ## API Groups
 
-![API Groups](assets/images/65_k8s_api_groups.png)
+![API Groups](assets/images/65_k8s_api_groups.jpg)
 
 - (Don't need to remember diagram. Just understand it)
 - Most of the new and future API groups in k8s goes to **Named** group.
@@ -1812,10 +1812,10 @@ In the above comamnds, you as administrator is responsible to final result. For 
     - When each kubelet wants to Get information about Services, Endpoints, Nodes and Pods from Kube API server, or write information like Nodes status, Pod Status, Events to Kube API server. These privileges gets checked by *Node Authorizer*. Remember the `SYSTEM:NODES` we've as group to kubelets when creating certificates.
   - ABAC
     - Because we need to restart Kube api server after each change ABAC, and because we need to add new Policy for each user separately, it's difficult to manage compared to ABAC.
-      ![ABAC](assets/images/66_abac.png)
+      ![ABAC](assets/images/66_abac.jpg)
   - RBAC
     - It's easier than ABAC, because we create specific roles with permisions. Then add as many users as we want to that role.
-      ![RBAC](assets/images/67_rbac.png)
+      ![RBAC](assets/images/67_rbac.jpg)
   - Webhook
     - We delegate user authorization to a 3rd party, like *Open Policy Agent*. KubeAPI will ask that service to whether grant access to the user or not.
   - Always Allow
@@ -2063,7 +2063,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 
 - For each resource in k8s (like ReplicaSet, Pod, Deployment, Job, so on) there is a responsible Controller that watches the status of that object and maintaince it to be in expected status.
   ![Pod Controller Golang](assets/images/70_pod_controller_go.jpg)
-  ![Controller for Resource](assets/images/69_controller_for_resource.png)
+  ![Controller for Resource](assets/images/69_controller_for_resource.jpg)
 
 - But we can create custom resources it controller for maintaining status of those resource. For example if want to create a Custom Resource for booking flights and a Custom controller for it:
   
@@ -2131,22 +2131,22 @@ We can 2 concept in Docker:
 1. Storage Drivers
    
    - When we create run `docker build` command, Docker will cache the steps (each like in Dockerfile is one step or one layer). For the next `docker build`s, Docker will used the cached steps of previous `build` until it see the first different step.
-     ![Docker layered architecture](assets/images/71_docker_layered_architecture.png)
+     ![Docker layered architecture](assets/images/71_docker_layered_architecture.jpg)
    - All of of *image layer* steps are read only. But any data that is created after `docker run` (Container layer) command can be modified. When we remove the container, all the data created in "container" layer will be destroyed.
-     ![layers read and write](assets/images/72_layers_read_write.png)
+     ![layers read and write](assets/images/72_layers_read_write.jpg)
    - What should we do if we want some of our data to resist when the Container got restarted? Create volumes:
      - **Bind mounting** is mounting existing directory of host machine to the container. **Volume mounting** is mounting a volume (that is locate in /var/lib/docker/volumes of host machine). Storage Drivers are responsible to bind mounting and volume driver plugings are responsible to volume mounting.
      - First create volume in host machine (/var/lib/docker/volumes) using `docker volume create <volumeName>`
      - Attach volume to the container on creation `docker run -v <volumeName>:/var/lib/mysql mysql`
      - We can even attach an exisiting directory in our machine (bind mounting). For this, use absolute path like `docker run -v /data/mysql:/var/lib/mysql mysql`
      - A newer way of attaching volume is better and recommended: `docker run --mount -type=bind,source=<dirInHost>,target=<dirInContainer> mysql`
-       ![Create Docker Volumes](assets/images/73_create_volumes.png)
+       ![Create Docker Volumes](assets/images/73_create_volumes.jpg)
    - Who is responsible to maintaining this mounting a directory (not volume) of host machine to the container? **Storage Drivers**. There are some storage drivers (like `AUFS`, `ZFS`, `BTRFS`, so on). Docker will the best one for us based on the OS we choose in image. But we can also define it manually.
 
 2. Volume Drivers
    
    - We saw that we can mount volumes to container. **Volume Drivers** are responsible to do this operation. There are many volume driver plugins like *Local*, *Azure File Storage*, *Convey*, *DigitalOcean Block Storage*, *RexRay*, etc. We can define the plugin on docker run command
-     ![Define Volume Driver](assets/images/74_define_volume_driver.png)
+     ![Define Volume Driver](assets/images/74_define_volume_driver.jpg)
 
 **Back to Kubernetes**
 
@@ -2155,10 +2155,10 @@ We can 2 concept in Docker:
   - CRI (Container Runtime Interface). Container runtimes that follow this interface and can connect k8s using CRI: Docker, rkt, cri-o, ...
   - CNI (Container Network Interface). Solutions that follow this interface and can extend networking features of k8s: weaveworks, flannel, cilium, ...
   - CSI (Contaienr Storage Interface). Solutions that follow this interface and has been developed to work with different storage types of k8s: Amazon EBS, GlusterFS, DELL EMC, ...
-    ![k8s interfaces](assets/images/75_kubernetes_interfaces.png)
+    ![k8s interfaces](assets/images/75_kubernetes_interfaces.jpg)
 
 - As we see in the image below, both Orchestration and Storage Plugins follow the RPC protocol interface. So, when we want to create a volume in k8s, it calls the `CreateVolume` procedure of the Storage Plugin (k8s doesn't need to know which Storage plugin it is)
-  ![CSI interface](assets/images/77_csi_interface.png)
+  ![CSI interface](assets/images/77_csi_interface.jpg)
 
 ## Volumes
 
@@ -2195,7 +2195,7 @@ We can 2 concept in Docker:
 ### Persistent Volumes (PV)
 
 - While we can define volume in Pod definition itself, it's highly recommended to create PV (Persistent Volumes). Means, we create Volumes separately and attach them to any Pods we want. As an example for its benefits is that the k8s admin can create several PVs, and k8s users (like developer) can attach one of those PVs to their Pods, without need to deal with volume provisioning.
-  ![PV](assets/images/78_persisten_volume.png)
+  ![PV](assets/images/78_persisten_volume.jpg)
 
 - To create PVs:
   
@@ -2339,13 +2339,13 @@ We can 2 concept in Docker:
   
   - We connect them to a Switch, and the Switch creates a network contains 2 computers. Both of the systems should have Network Interface. To see the network interface, run `ip link`
   - Now, to assume a network for each machine, run command to get IP address: `ip addr add 192.168.1.10/24 dev eth0`. Now, the computers can ping each other.
-    ![Switch Network](assets/images/79_switch_network.png)
+    ![Switch Network](assets/images/79_switch_network.jpg)
 
 - If the 2 machines aren't in the same network:
   
   - We can connect them to each other using Router. The router is another device in the Network. We need to tell the machine that use Router to reach the machine in other Network using defining Gateways like this: `ip route add 192.168.2.0/24 via 192.168.1.1`. This has to be done in all the systems in both sides to be able to reach each other.
   - To see existing route gateways: `route`
-    ![Route Gateways](assets/images/80_route_gateways.png)
+    ![Route Gateways](assets/images/80_route_gateways.jpg)
 
 - If we want these systems to access to internet
   
@@ -2375,7 +2375,7 @@ We can 2 concept in Docker:
   - Note that, the machine first looks for records in `etc/hosts` FIRST, then if not exists there, it will look in DNS server. But we can change this behaviour by modifying the file `/etc/nsswitch.conf`. By default it has `hosts: files dns`. But we can make it `hosts: dns files`
   - Public well-know DNS servers have a huge list of all websites on the internet. So, by adding them, all domain names (like facebook.com, google.com, etc) will be accessible in our machine. One popular DNS resolver is `8.8.8.8`. We'll add it to `/etc/resolv.conf`: `nameserver 8.8.8.8`.
   - Instead of putting public DNS resolver on each machine, we can also put it in our DNS resolver using `Forward All to 8.8.8.8`
-    ![DNS Public](assets/images/81_dns_public.png)
+    ![DNS Public](assets/images/81_dns_public.jpg)
 - What if we regularly query to subdomains of our company domain, but want to use shorten way only? For example, instead of `ping db.mycompany.com`, we be able to just call `ping db`? Just add `search mycompany.com` in `resolv.conf` file. Even can define several records like `search mycompany.com dev.mycompany.com`
 - We can also use `nslookup` or `dig` tools instead of `ping` to find resolve domain, but they don't look at `etc/hosts` file's content
 - There are different solutions to setup DNS server. One good option is `CoreDNS`. After installation, you can either import records from /etc/hosts file or other ways.
@@ -2384,7 +2384,7 @@ We can 2 concept in Docker:
 
 - Namespaces is like rooms in a house. Parent of house can see processes of rooms, but children can see processes in their room only.
 - The host machine has a Network Interface, Routing Table and ARP Table to communicate with world outside (like local network). But we can also define virtual interfaces, Routing table and ARP table for the Namespace (or Container)
-  ![Namespace network interface](assets/images/82_namespace_network_interface.png)  
+  ![Namespace network interface](assets/images/82_namespace_network_interface.jpg)  
   - First of all, we create Namespaces:
     - `ip netns add red`, `ip netns add blue`. Then run `ip netns` to list
     - How to run command inside NS? By appending `ip netns exec {Namespace}`. E.g `ip netns exec red ip link`.
@@ -2397,7 +2397,7 @@ We can 2 concept in Docker:
     - Now bring up the interfaces: `ip -n red link my-veth-red up` and `ip -n blue link my-veth-blue up`
     - Now 2 namespaces can reach out to each other. Test it by ping each other: `ip netns exec red ping {ip_of_veth_blue}`
     - You can see ARP of both NSes `ip netns exec red arp` and `ip netns exec blue arp`. Note that the host machine is not aware or these ARPs.
-      ![NS cable](assets/images/83_namespace_cables.png)
+      ![NS cable](assets/images/83_namespace_cables.jpg)
   - What if we have many namespaces and want to establish connection between them? We should create a virtual switch. From available solutions, we're going to use *Linux Bridge* option
     - Create the virsual network using `ip link add v-net-0 type bridge` and up it using `ip link set dev v-net-0 up`
     - If we already created link and want to delete, use `ip -n red del my-veth-red`. It'll also delet other end of the pair
@@ -2407,29 +2407,29 @@ We can 2 concept in Docker:
     - Assign IP to NS using `ip -n red addr add 192.168.15.1 dev my-veth-red`
     - Up the network of NS using `ip -n red link set my-veth-red up`
     - Follow the last 5 steps for other Namespaces as well.
-      ![Namespaces bridge](assets/images/84_namespaces_bridge.png)
+      ![Namespaces bridge](assets/images/84_namespaces_bridge.jpg)
     - Now all the namespaces can communicate with each other. But because the host and Namespaces are in different network, host machine can't reach the namespaces. How can we solve it, just with assigning an IP to the Bridge using `ip add addr 192.168.15.5/24 dev v-net-0`
     - Note that this Namespaces are isolated from world outide. 
   - The namespaces that we created in the last stage do not have access to the world outside, like the other computers in the local network. To give this access:
     - Add a route to each namespace to reach to IP range through host machine: `ip netns exec blue ip route add 192.168.1.0/24 via {IP_OF_HOST_WITHIN_NAMESPACES_NETWORK}`
     - Enable NAT functionality in host machine using: `iptables -t nat -A POSTROUTING -s 192.168.15.0/24 -j MASQUERADE`. Actually, the computers in the local network will think the request comes from the host mahine, not the namespaces inside it. Because iptables will replace FROM of all packets to host machine's IP.
-      ![Namespaces' gateway](assets/images/85_namespaces_gateway.png)
+      ![Namespaces' gateway](assets/images/85_namespaces_gateway.jpg)
     - To enable internet access for namespaces, just add default route to each namespace `ip netns exec blue ip route default via {IP_OF_HOST_WITHIN_NAMESPACES_NETWORK}`
-      ![NS internet access](assets/images/86_namespaces_internet_access.png)
+      ![NS internet access](assets/images/86_namespaces_internet_access.jpg)
     - If we want the namespaces be accessible from outside (like if our webapp is in namespace), a good way is port forwarding: `iptables -t nat -a PREROUTING --dport 80 --to-destination 192.168.15.2:80 -j DNAT`
-      ![NS port forwarding](assets/images/87_namespaces_port_forwarding.png)
+      ![NS port forwarding](assets/images/87_namespaces_port_forwarding.jpg)
   - While testing the Network Namespaces, if you come across issues where you can't ping one namespace from the other, make sure you set the NETMASK while setting IP Address. ie: 192.168.1.10/24 `ip -n red addr add 192.168.1.10/24 dev veth-red`. Another thing to check is FirewallD/IP Table rules. Either add rules to IP Tables to allow traffic from one namespace to  another. Or disable IP Tables all together (Only in a learning environment).
 
 ## CNI (Container Network Interface)
 
 - Since all namespace networking solutions should follow the similar steps (as we below in the picture), CNI standard has been introduced. So, if both the Network plugin and the Runtime (like kubernets) will follow it, Runtime can use the plugin as its network solution.
-  ![network solutions](assets/images/88_network_solutions.png)
+  ![network solutions](assets/images/88_network_solutions.jpg)
 - Any CNI solution should be able to create a bridge using command `bridge add <cid> <namespace>`
 - Some of container runtimes that implement CNI: weaveworks, flannel, cilium, vmware NGX.
   - But Docker has its own implementation which is called `CNM` (Container Network Model). So, we can't create Docker container using CNI-implemented solutions `docker run --network=cni-bridge`. So, how k8s will use network solutions to create bridge in Docker containers? k8s create Docker container without network `docker run --network none <image>` behind the scenes and then invoke the configured CNI plugin to take care of NS configurations `bridge add <container-id> <namespace>`.
 - Available CNI configuration files in k8s will be located in `opt/cni/bin`. To see which CNI our k8s will use and how, head over to `etc/cni/net.d` directory. You can see files like `10-bridge.conflist`. k8s will pick the first file alphabetically. 
   - To see what binary files will be run by kubelet after container and its associated namespaces, check the `type` of plugins inside the file in `/etc/cni/net.d`. E.g in the following example, flannel will run first then portmap:
-    ![CNI binary order](assets/images/92_cni_binary_order.png)
+    ![CNI binary order](assets/images/92_cni_binary_order.jpg)
 - If the exam asked you to install a CNI plugin, go to k8s documents > "Installing Addons". Then naviage to the plugin page. The installation maybe so easy, but have a quick look on the whole page. There maybe some gotchas and required configurations. For example, for Weaveworks, there is "Things for watch out for", read that accurately.
 - How our custom implemented CNI manages IP allocation to the Pods? We can store IPs in a file. But CNI comes with 2 builtin plugins to outsource IP allocation to it: `DHCP` and `host-local`. We can define it in `etc/cni/net.d/..` file. Look for `ipam` section. You can set type, subnets and routes. Have a look on Weave section below.
 - If we want to know what gateway will be used if a Pod scheduled on a Node:
@@ -2452,7 +2452,7 @@ We can 2 concept in Docker:
 ## k8s Cluster Networking
 
 - The following pictures shows ports of different k8s components. So, keep them in mind when you want to allow them in firewall or Cloud Security Group configurations:
-  ![Cluster Ports](assets/images/89_cluster_ports.png)
+  ![Cluster Ports](assets/images/89_cluster_ports.jpg)
   - Note that if we have several master nodes, we should allow ports in all of them. In addition, we should allow port `2380` in all master nodes, because of ETCD
 - To see Internal IP of a k8s Node, run `k get no {nodeName} -o wide` or find Internal IP in `k describe node {nodeName}`
 - To find out which Network Interface the k8s Node is using, run `ip addr` or `ip link`. Then look for the interface that has the **Internal IP** of Node.
@@ -2474,9 +2474,9 @@ We can 2 concept in Docker:
 ## Pod Networking
 
 - K8s doesn't have built-in networking solution. We can create our own CNI implementation script or use solutions like Flannel, etc. If we want to create our own CNI implementation, it'll be the steps we discussed in previous chapters (shown again in the image below).
-  ![Pod Networking](assets/images/90_pod_networking.png)
+  ![Pod Networking](assets/images/90_pod_networking.jpg)
   - Also, our Nodes should be part of one network to be able to communicate with each other. For this purpose, we can add ip routes. But because it'll be complicated when Pods and Nodes get increased, we should add routes in Router (that all Nodes are using)
-    ![Nodes router gateway](assets/images/91_nodes_router_gateway.png)
+    ![Nodes router gateway](assets/images/91_nodes_router_gateway.jpg)
   - In addition to ADD command, our script should implement DEL command as well.
   - CNIs out there (like Flannel) handles all these steps
 
@@ -2484,15 +2484,15 @@ We can 2 concept in Docker:
 
 - We're taking about ClusterIP service here.
 - Services are not real objects. They're cluster-wide (not Node bound) virsual objects. Consider that Service is not a real object in cluster, k8s can't create namespace or assign IP to the object. In reality, for each service, `kube-proxy` creates a IP+Port forwarding rule in all Nodes.
-  ![Kubeproxy services rule](assets/images/93_kubeproxy_services_rule.png)
+  ![Kubeproxy services rule](assets/images/93_kubeproxy_services_rule.jpg)
   - kube-proxy can does this forwarding using different ways, and we can change it:
     - `kube-proxy --proxy-mode [userspace | iptables | ipvs]`. (default value is iptables).
     - To find out which is being used now, see kube-proxy logs `kubectl logs -n kube-system <kube-proxy-pod>`
   - What IP range kube-proxy pick service IP from. IP-range been set in kube-api-server parameters `kube-api-server --service-cluster-ip-range ipNet (default: 10.0.0.0/24)`. We can see this IP Range using `ps aux | grep kube-api-server`.
   - Note: This IP Range shouldn't overlap the Pod-CIDR range been defined in Pod Networking setup. Means there shouldn't be any chance that IP of a Pod and IP of a Service be the same.
-    ![kube-api-server service ip range](assets/images/94_kube-api-server-service-ip-range.png)
+    ![kube-api-server service ip range](assets/images/94_kube-api-server-service-ip-range.jpg)
   - We can see the rules create by kube-proxy by running `iptables -L -t nat | grep [serviceName]` or in kube-proxy logs:
-    ![Service in iptables](assets/images/95_service_in_iptables.png)
+    ![Service in iptables](assets/images/95_service_in_iptables.jpg)
 
 ## DNS in Kubernetes
 
@@ -2505,12 +2505,12 @@ We can 2 concept in Docker:
   - Finally all services and Pod are grouped in a TLD domain which is `cluster.local` by default. So we can reach services using `<serviceName>.<namespace>.svc.<kubernetesTLD>`
   
   - By default, k8s creates DNS records only for services. But we can enable Pod DNS record creation as well. Then, the similar pattern applies for Pods. But Pods' DNS names will be a copy of their IP address, by `.` characters replaced by `-`. But note that Pods are only reachable with full FQDN (`<podNS>.<namespace>.pod.<kubernetesTLD>`)
-    ![k8s dns](assets/images/96_k8s_dns.png)
+    ![k8s dns](assets/images/96_k8s_dns.jpg)
     
     ### CoreDNS in k8s
 
 - Kubernetes uses CoreDNS as a DNS server. CoreDNS is deployed as a Pod Replicaset in kubernetes. We can find its configuration in `/etc/coredns/Corefile` (which is pass in configmap of CoreDNS). The orange keywords are the plugins CoreDNS will use. `cluster.local` is kubernetes TLD used in DNS resolver. The row `pods` also enables DNS record creation for Pods. `proxy` line defines where the resolv.conf will be stored.
-  ![CoreDNS config](assets/images/97_coredns_config.png)
+  ![CoreDNS config](assets/images/97_coredns_config.jpg)
 
 - CoreDNS will also have a k8s ClusterIP service to be reachable by k8s components. All the Pods will have `nameserver <coredns-cluserip>` in their `/etc/resolv.conf`. But how Pods will know what's the IP of CoreDNS? `kubelet` will store it. You can have a look on `/var/lib/kubelet/config.yaml` file, `clusterDNS` row.
 
@@ -2522,7 +2522,7 @@ We can 2 concept in Docker:
 ## Ingress
 
 - Let's imagine we want to setup seveal services on cloud k8s, for our website like `domain.com/video` which points to the Video service in our k8s, and `domain.com/stream` which points Steam service. Because the 2 applicatins are different with different ports, we need to create 2 Load Balancers in the Cloud provider. Also, in which level we'll define which application to use based on the URL pattern (means /video points to Video service, and so on)? In Cloud Load Balancer level, a Reverse proxy like Nginx? In a middleware application? Also, who'll handle SSL of the domain and subdomains.
-  ![Setup without Ingress](assets/images/98_setup_without_ingress.png)
+  ![Setup without Ingress](assets/images/98_setup_without_ingress.jpg)
 
 - Ingress is a solution for such setups. We'll use k8s itself to manage this setup, and the configuration YAMLs will sit alongside our other k8s config. Using Ingress, we'll expose only single accessible URL to the outside (like to Cloud Provider) and all routings will be handled by k8s, plus SSL.
 
@@ -2598,7 +2598,7 @@ We can 2 concept in Docker:
     name: nginx-ingress-serviceaccount
   ```
   
-  ![Nginx deployment](assets/images/99_nginx_deployment.png)
+  ![Nginx deployment](assets/images/99_nginx_deployment.jpg)
 
 - Now, the Ingress Controller is up. We can create Ingress configurations. A simple Ingress config which forwards all traffic to one service will be like this:
   
@@ -2717,7 +2717,7 @@ We can 2 concept in Docker:
 
 - In Gateway APIs, there are 3 personnas to manage. Means infra admin creates GatewayClass, Cluster Operator creates Gateway, And developers create like TLSRoute, HTTPRoute and etc.
   
-  - ![Gateway API Personna](assets/images/100_gateway_api_personnas.png)
+  - ![Gateway API Personna](assets/images/100_gateway_api_personnas.jpg)
 
 - GatewayClass how Gateway implemented by Controller. So, first we should create GatewayClass:
   
@@ -2770,12 +2770,12 @@ We can 2 concept in Docker:
     ```
 
 - List of supported Routes in Gateway API
-  ![Supported Gateway Routes](assets/images/101_supported_Gateway_Routes.png)
+  ![Supported Gateway Routes](assets/images/101_supported_Gateway_Routes.jpg)
 
 - The following examples are the Gateway API version of Ingress using Ingress-Controllers (you see how much structured and explicit they are)
-  ![Ingress To Gateway example 1](assets/images/102_ingress_to_gateway_example1.png)
-  ![Ingress To Gateway example 2](assets/images/102_ingress_to_gateway_example2.png)
-  ![Ingress To Gateway example 3](assets/images/102_ingress_to_gateway_example3.png)
+  ![Ingress To Gateway example 1](assets/images/102_ingress_to_gateway_example1.jpg)
+  ![Ingress To Gateway example 2](assets/images/102_ingress_to_gateway_example2.jpg)
+  ![Ingress To Gateway example 3](assets/images/102_ingress_to_gateway_example3.jpg)
 
 - Most of the Solutions (like Nginx, Amazon EKS, Nginx, Traefik, etc) are already followed Gateway Controller implementation, and we can use them as Gateway API controller.
 
@@ -2784,7 +2784,7 @@ We can 2 concept in Docker:
 ## Using Kubeadm
 
 - To install, we'll walk through the following steps:
-  ![kubeadm steps](assets/images/103_kubadm_steps.png)
+  ![kubeadm steps](assets/images/103_kubadm_steps.jpg)
 
 # Helm
 
@@ -2803,7 +2803,7 @@ We can 2 concept in Docker:
     
     ## Helm Components
     
-    ![Helm components](assets/images/104_helm_components.png)
+    ![Helm components](assets/images/104_helm_components.jpg)
     
     ### Helm CLI
 
@@ -2847,16 +2847,16 @@ We can 2 concept in Docker:
   - `name` and `description` of metadatas of this Helm chart
   - `type`. `application` is for most of our charts, `library` is for utility charts that we want to use in the other Helm charts
   - `keywords` and `maintainers` are informational fields mostly for public repos.
-  - ![Simple Helmchart](assets/images/105_helm_chart_helloworld.png)
+  - ![Simple Helmchart](assets/images/105_helm_chart_helloworld.jpg)
     ** Modify Helm chart**
 
 - For modifying default values of a chart (like changing BlogName of a Wordpress site) that will be downloaded from a repo, we have multiple ways:
   
   1. Define in the parameters using `--set` like this:
-     ![Modify Helm chart values using set](assets/images/106_helm_modify_values_set.png)
+     ![Modify Helm chart values using set](assets/images/106_helm_modify_values_set.jpg)
   
   2. Pass all variables that we want to override in a file:
-     ![Modify Helm chart values using set](assets/images/106_helm_modify_values_file.png)
+     ![Modify Helm chart values using set](assets/images/106_helm_modify_values_file.jpg)
   
   3. Pull the chart using command like `helm pull bitnami/wordpress` and untar it or pull&untar using `helm pull --untar bitnami/wordpress`. You then will see all the files of the chart in current directory. Now open and edit any files you want, and then create the release using `helm install <desiredReleaseName> ./wordpress`
      
@@ -2876,11 +2876,11 @@ We can 2 concept in Docker:
 
 - **Kustomize** will solve this issue for us. With Kustomize, we define Base definitions and Overlays.
   
-  - ![Kustomize](assets/images/107_kustomize_base.png)
+  - ![Kustomize](assets/images/107_kustomize_base.jpg)
 
 - File structure of Kustomize will be like this:
   
-  - ![Kustomize file structure](assets/images/108_kustomize_file_structure.png)
+  - ![Kustomize file structure](assets/images/108_kustomize_file_structure.jpg)
 
 - **Kustomize** gets installed by **kubectl**, but it may not be the latest version.
   
@@ -2898,7 +2898,7 @@ We can 2 concept in Docker:
 - To delete the resources created by kustomize, we can run `kustomize build <dir> | k delete -f -` or `k delete -k <dir>`
 
 - If our resources starting grows, instead of having all of them in the main Kustomize directory, we create create sub-direcotories based on app scopes or app kind or etc, and pass their path in kustomize file like `- db/my-db-deploy.yaml`. But even a cleaner way is to create customize file in each directory, and import all those directories in the main kustomize:
-  ![Kustomize directories](assets/images/109_kustomize_directories.png)
+  ![Kustomize directories](assets/images/109_kustomize_directories.jpg)
 
 - Try to use `kustomize create --autodetect --recursive` to auto detect definition files for ease.
 
@@ -2951,52 +2951,52 @@ We can 2 concept in Docker:
 
 - The following example is a Patch:
   
-  - ![Kustomize patches](assets/images/110_kustomize_patches.png)
+  - ![Kustomize patches](assets/images/110_kustomize_patches.jpg)
 
 - There are 2 ways of define Patches in Kustomize (Json 6902 is what we saw above):
 
-- ![Kustomize patch definitions](assets/images/111_kustomize_patch_definitions.png)
+- ![Kustomize patch definitions](assets/images/111_kustomize_patch_definitions.jpg)
 
 - We can move the values of patch definition to a separate files like the following (for each standard):
 
-- ![Kustomize patch inline file 1](assets/images/112_kustomize_inline_file_1.png)
+- ![Kustomize patch inline file 1](assets/images/112_kustomize_inline_file_1.jpg)
 
 - *Path* starts with `/` in patches.
 
 - Example of **Replace** a **Dictionary** item (in both Json 6902 and strategic Merge, in both inline and file):
-  ![Kustomize patch replace 1](assets/images/113_kustomize_patch_replace_1.png)
-  ![Kustomize patch replace 2](assets/images/113_kustomize_patch_replace_2.png)
+  ![Kustomize patch replace 1](assets/images/113_kustomize_patch_replace_1.jpg)
+  ![Kustomize patch replace 2](assets/images/113_kustomize_patch_replace_2.jpg)
 
 - Example of **Add** a **Dictionary** item:
-  ![Kustomize patch add 1](assets/images/114_kustomize_patch_add_1.png)
-  ![Kustomize patch add 2](assets/images/114_kustomize_patch_add_2.png)
+  ![Kustomize patch add 1](assets/images/114_kustomize_patch_add_1.jpg)
+  ![Kustomize patch add 2](assets/images/114_kustomize_patch_add_2.jpg)
 
 - Examples of **Remove** a **Dictionary** item: (Note that in Json6902 the keyword is *remove*)
-  ![Kustomize patch remove 1](assets/images/115_kustomize_patch_remove_1.png)
-  ![Kustomize patch remove 2](assets/images/115_kustomize_patch_remove_2.png)
+  ![Kustomize patch remove 1](assets/images/115_kustomize_patch_remove_1.jpg)
+  ![Kustomize patch remove 2](assets/images/115_kustomize_patch_remove_2.jpg)
 
 - Examples of Replace a **List** item. Note that `0` is index of array item:
-  ![Kustomize patch replace list 1](assets/images/116_kustomize_patch_replace_list_1.png)
-  ![Kustomize patch replace list 2](assets/images/116_kustomize_patch_replace_list_2.png)
+  ![Kustomize patch replace list 1](assets/images/116_kustomize_patch_replace_list_1.jpg)
+  ![Kustomize patch replace list 2](assets/images/116_kustomize_patch_replace_list_2.jpg)
 
 - Examples of **Add** a **list** item. Note that instead of `-` (which means append to the end), we can use index of new item
-  ![Kustomize patch add list 1](assets/images/117_kustomize_patch_add_list_1.png)
-  ![Kustomize patch add list 2](assets/images/117_kustomize_patch_add_list_2.png)
+  ![Kustomize patch add list 1](assets/images/117_kustomize_patch_add_list_1.jpg)
+  ![Kustomize patch add list 2](assets/images/117_kustomize_patch_add_list_2.jpg)
 
 - Examples of **Remove** of **list** item. Take care of `$patch: delete` and `name: database`. It means delete all containers that has name:database
-  ![Kustomize patch remove list 1](assets/images/118_kustomize_patch_remove_list_1.png)
-  ![Kustomize patch remove list 2](assets/images/118_kustomize_patch_remove_list_2.png)
+  ![Kustomize patch remove list 1](assets/images/118_kustomize_patch_remove_list_1.jpg)
+  ![Kustomize patch remove list 2](assets/images/118_kustomize_patch_remove_list_2.jpg)
 
 ### Overlays
 
 - Now with combining all topics above, we can achieve situations like *per environment customization* (file structure can be different)
-  ![Per env customization](assets/images/119_kustomize_per_env.png)
+  ![Per env customization](assets/images/119_kustomize_per_env.jpg)
 
 - For achieving this, we'll use overlays:
-  ![Overlays](assets/images/120_kustomize_overlays.png)
+  ![Overlays](assets/images/120_kustomize_overlays.jpg)
 
 - Even different environments can have different amount of kustomization resources files:
-  ![Overlays 2](assets/images/120_kustomize_overlays_2.png)
+  ![Overlays 2](assets/images/120_kustomize_overlays_2.jpg)
   
   ### Components
 
@@ -3009,7 +3009,7 @@ We can 2 concept in Docker:
 ## Application Failures
 
 - If the app is not reachable for the front user, firstly, draw a diagram of the request flow like image below, Then start testing from front to back.
-  ![Troubleshoot networking](assets/images/122_troubleshoot_networking.png)
+  ![Troubleshoot networking](assets/images/122_troubleshoot_networking.jpg)
 
 - In the example above, we'll follow, to find the issue:
   
