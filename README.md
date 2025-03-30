@@ -3200,6 +3200,7 @@ You can get this list using `kubectl api-resources`
 - [kubectx](https://github.com/ahmetb/kubectx) . Faster way to switch between contexts (clusters) and namespaces in kubectl
 
 # Exam Tips
+- Make sure you've read and fully understood the question before solving it.
 
 - ✅ During the exam, you will have access to :
   
