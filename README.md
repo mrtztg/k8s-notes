@@ -2597,6 +2597,7 @@ We can 2 concept in Docker:
   metadata:
     name: nginx-ingress-serviceaccount
   ```
+
   
   ![Nginx deployment](assets/images/99_nginx_deployment.jpg)
 
@@ -2666,7 +2667,7 @@ We can 2 concept in Docker:
     ```
 
 - To create Ingress using imperative command: `k create ingress <ingress-name> --rule="host/path=service:port"`. E.g:
-  
+
   - `k create ingress ingress-website --rule="/wear=wear-service:80" --rule="auth.example.com/=auth-service:80" --rule="video.example.com/streaming=video-streaming-service:80 ...`
 
 - Different Ingress controllers have different options. Nginx Ingress Controller also has many. One of them is Rewrite option, which behaves like a serach and replace function on URL. The example below is an Ingress config, but `wear/` prefix from any URL path with be removed. E.g:
@@ -2705,6 +2706,7 @@ We can 2 concept in Docker:
 - Note: Ingress resource comes under the namespace scoped. So, don't forget to create it in the proper namespace.
 
 - Troubleshoot: If even after correct Ingress rules defining, the URL is not accessible in the browser, check Pod logs. You may get idea what's the issue, like we need to define Rewrite rule as well.
+- If we didn't do port-forwarding 80 to Nginx controller (or any controller we installed), we should use NodePort of the controller to access any Ingresses from extrenal machines.
 
 ## Gateway API
 
