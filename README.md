@@ -2283,6 +2283,22 @@ We can 2 concept in Docker:
 
 - If a PVC mounted to a Pod, and we try to delete the PVC, it'll stay in terminating status until the Pod is running. As soon as Pods get deleted, PVC will be deleted.
 
+## Dynamic Provisioning
+- In static provisioning (previous way), the administrator should create PV for each request manually. But there is another automatic ways which is called Dynamic Provisioning.
+- With this way, we don't need to create PV manually anymore. We just create Claim, and it calls the Storage Class, and storage class will privision a disk with required size for the claim automatically:
+  ```yaml
+  kind: PersistentVolumeClaim
+    # ...
+  spec:
+    storageClassName: my-gcp-goldplan-stoarge # This is the line to connect to storage class
+    accessModes:
+      - ReadWriteOnce
+    resoureces:
+      # ...
+  ```
+- Local storage class doesn't support dynamic provisioning. But if we really want dynamic provisioning, we can use [local-path-provisioner](https://github.com/rancher/local-path-provisioner)
+
+
 ### Storage Classes
 
 - What should we do if we want to mount a volume from our provider (like GCP, AWS, so on)?
@@ -2299,7 +2315,7 @@ We can 2 concept in Docker:
         fsType: ext4
     ```
   
-  - But there is an easier solution for this. We can create **Storage Classes** like this:
+  - But there is an easier solution for this. We can use **Dynamic Provisioning** . So, we create **Storage Classes** like this:
     
     ```yaml
     apiVersion: storage.k8s.io/v1
@@ -2312,20 +2328,7 @@ We can 2 concept in Docker:
       type: pd-standard # Or 'pd-ssd'
       replication-type: none # or 'regional-pd'
     ```
-  
-  - With this way, we don't need to create PV manually anymore. We just create Claim, and it calls the Storage Class, and storage class will privision a disk with required size for the claim automatically:
-    
-    ```yaml
-    kind: PersistentVolumeClaim
-      # ...
-    spec:
-      storageClassName: my-gcp-goldplan-stoarge # This is the line to connect to storage class
-      accessModes:
-        - ReadWriteOnce
-      resoureces:
-        # ...
-    ```
-- Local storage class doesn't support dynamic provisioning
+  - PVCs should be like the definition mentioned in **Dynamic Provisioning** section.
 
 # Networking
 
@@ -2716,6 +2719,7 @@ We can 2 concept in Docker:
   
   - Doesn't support multi-tenancy, Namespace isolation, No RBAC for features, No resource isolation
   - No native support for TCP/UDP routing, Traffic splitting/weighting, Header manipulation, Authentication, Redirects, Rewriting, Rate limiting, Middleware, Websocket support, Custom error pages, Session affinity, CORS. Means we should define *Annotations*, which will make our Ingress config very locked in that specific Controller (like locked to Nginx Controller). Gateway API solved this problem.
+  - Gateway API should be installed using [this following guide](https://gateway-api.sigs.k8s.io/guides/).
 
 - In Gateway APIs, there are 3 personnas to manage. Means infra admin creates GatewayClass, Cluster Operator creates Gateway, And developers create like TLSRoute, HTTPRoute and etc.
   
@@ -2729,7 +2733,7 @@ We can 2 concept in Docker:
   metadata:
     name: example-class
   spec:
-    controllerName: example.com/gateway-controller
+    controllerName: example.com/gateway-controller # Controller should be installed before using it here.
   ```
   
   - Then we create Gateway:
@@ -2779,7 +2783,7 @@ We can 2 concept in Docker:
   ![Ingress To Gateway example 2](assets/images/102_ingress_to_gateway_example2.jpg)
   ![Ingress To Gateway example 3](assets/images/102_ingress_to_gateway_example3.jpg)
 
-- Most of the Solutions (like Nginx, Amazon EKS, Nginx, Traefik, etc) are already followed Gateway Controller implementation, and we can use them as Gateway API controller.
+- Most of the Solutions (like Nginx, Amazon EKS, Nginx, Traefik, etc) are already followed Gateway Controller implementation, and we can use them as Gateway API controller. So, install which you want and use it in GatewayClass.
 
 # Install Kubernetes
 
