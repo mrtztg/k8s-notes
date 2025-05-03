@@ -1876,6 +1876,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - If you (as user) want to check whether you have to access to perform a action in a cluster, run command like `kubectl auth can-i create pod`.
   
   - If you're admin and want to check a user's access, run `kubectl auth can-i create pod --as johndoe`
+  - We can verify serviceAccount's access as well using this format: `kubectl auth can-i <verb> <resource> --as=system:serviceaccount:<namespace>:<serviceaccountname> [-n <namespace>]`
   - In both of the commands above, you can add `--namespace <NSName>` to check permission in specific Node
   - If you want to perform a action as a user, add --as, like `kubectl get po --as johndoe`
 
