@@ -774,6 +774,8 @@ In the above comamnds, you as administrator is responsible to final result. For 
       limits.memory: 10Gi
   ```
 
+  - If you see Deployment's desired Pods are not equal to ready ones, the resourcequotas and also resource requests to make sure there is enough reosurce for all pods
+
 ## Daemon Sets
 
 - Daemon sets is very similar to ReplicaSet, but it makes sure at exactly one replica of the Pod is deployed in all Nodes in the Cluster. Even if a Node been added after DaemonSet creation. Some usages of DaemonSet is monitoring or logging tools that we want to have in all Nodes. Even kube-proxy uses the same concept.
@@ -1056,6 +1058,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
         maxSurge: 3
         maxUnavailable: 1
   ```
+  - Note: If the `UP-TO-DATE` colum of a Deployment info is not equal to total Pod count, there was an issue with rollout of the Deployment. So, check `k rollout history deployment <deploymentName>`. You can find the issue. Sometime the solution is just resuming rollout.
 
 ## Commands
 
