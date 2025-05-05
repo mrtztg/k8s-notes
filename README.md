@@ -2221,6 +2221,20 @@ We can 2 concept in Docker:
   ```
 
 - To list PVs, run `kubectl get peristentvolume` or `k get pv`
+- Local path volumes should have `nodeAffinity` section to target the Node to provision volume in:
+- ```yaml
+  spec:
+    ...
+    nodeAffinity:
+      required:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - example-node
+  ```
+
 
 ### Persistent Volume Claims (PVC)
 
