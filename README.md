@@ -774,6 +774,8 @@ In the above comamnds, you as administrator is responsible to final result. For 
       limits.memory: 10Gi
   ```
 
+  - If you see Deployment's desired Pods are not equal to ready ones, the resourcequotas and also resource requests to make sure there is enough reosurce for all pods
+
 ## Daemon Sets
 
 - Daemon sets is very similar to ReplicaSet, but it makes sure at exactly one replica of the Pod is deployed in all Nodes in the Cluster. Even if a Node been added after DaemonSet creation. Some usages of DaemonSet is monitoring or logging tools that we want to have in all Nodes. Even kube-proxy uses the same concept.
