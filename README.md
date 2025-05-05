@@ -1056,6 +1056,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
         maxSurge: 3
         maxUnavailable: 1
   ```
+  - Note: If the `UP-TO-DATE` colum of a Deployment info is not equal to total Pod count, there was an issue with rollout of the Deployment. So, check `k rollout history deployment <deploymentName>`. You can find the issue. Sometime the solution is just resuming rollout.
 
 ## Commands
 
