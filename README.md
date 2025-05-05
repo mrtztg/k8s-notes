@@ -2854,6 +2854,8 @@ We can 2 concept in Docker:
 
 - `helm history <releaseName>`. To see all revision (changes) history of a Release
 
+- `helm lint <path>`. To validate the helm chart files before using them.
+
 ### Helm Charts
 
 - A collections of files that contains all instructions of all the objects needs to be created in the cluster.
