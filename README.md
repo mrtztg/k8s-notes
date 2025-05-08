@@ -2127,6 +2127,8 @@ In the above comamnds, you as administrator is responsible to final result. For 
 
 - Note about the exam: Only learn CRD creation.
 
+- To get list of CRDs, run `kubectl get crd`
+
 # Storage
 
 **Understanding Storage in Docker**
@@ -3085,6 +3087,9 @@ We can 2 concept in Docker:
   2. Then check the status of kubelet, ssh to that Node and run `systemctl status kubelet` (Or run `sudo journalctl -u kubelet | grep -i fail` on the master Node) if it's not active, just activate it. 
     - If something is wrong with kubelet config, you can find the config in `/var/lib/kubelet/config.yaml`
   3. Check kubelet's certificate and make sure it's part of the right group, and it's not expired
+   
+## General failures
+- If kubectl fails, we can get pods using `crictl ps -a`
 
 ## CoreDNS failures
 - CoreDNS resources will be: a ServiceAccount, a ClusterRole, a ClusterRoleBinding, a Deployment, a ConfigMap, a Service.
