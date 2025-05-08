@@ -3041,9 +3041,9 @@ We can 2 concept in Docker:
   
   1. Try to reach out the application using curl: `curl http://web-service-ip:node-port`
   
-  2. See `kubectl describe svc <serviceName>` and make sure the port, endpoints are correct.
+  2. See `kubectl describe svc <serviceName>` and make sure the port, endpoints are correct. Note that endpoint should be already set, otherwise, that's the problem.
   
-  3. Find the Pod that the service points to, and make sure it's in running state. And even run `k describe <podName>`
+  3. Find the Pod that the service points to, and make sure it's in running state. And even run `k describe <podName>`.
   
   4. Check the logs of Pod and see any problematic log. You can even check the logs of previous deploy using `k logs <podName> -f --previous`
   
