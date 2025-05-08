@@ -3048,6 +3048,10 @@ We can 2 concept in Docker:
   4. Check the logs of Pod and see any problematic log. You can even check the logs of previous deploy using `k logs <podName> -f --previous`
   
   5. Check the status of DB service
+  
+
+
+- If a Pod fails starting but can't see any logs in Pod itself, check `controller-manager` Pod's logs.
      
 ## Controlplane failures
 
