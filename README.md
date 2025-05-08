@@ -3065,6 +3065,8 @@ We can 2 concept in Docker:
      
      - Otherwise, check the service in the host machine: `sudo journalctl -u kube-apiserver`
        
+- The logs of controlplane pods also located in `/var/log/pods/` path.
+  
 ## Networking troubleshooting
 - When you saw any networking related issue (like the service can't connect to Pod, or Pod can get IP, etc):
   - Firstly, check status of all Pods in `kube-system` namespace.
