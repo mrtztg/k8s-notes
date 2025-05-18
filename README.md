@@ -1303,6 +1303,10 @@ In the above comamnds, you as administrator is responsible to final result. For 
 
 - If a Pod is not READY, check `READY` column in `k get po`. If you see `Init:..` Means it's in stage or running initContainers. So, look at definition of its initContainers. If there is a problem in initContiner running, we can find it usineg `k logs {podName} -c initContainers`
 
+## Sidecar containers
+- These containers are used to enhance or to extend the functionality of the primary app container by providing additional services, or functionality such as logging, monitoring, security, or data synchronization, without directly altering the primary application code.
+- These restartable sidecar containers are independent from other init containers and from the main application container(s) within the same pod. These can be started, stopped, or restarted without affecting the main application container and other init containers.
+
 ## Scaling
 
 - One big purpose of using orchestraion solutions is auto scaling. When it comes to k8s, we have Cluster scaling and Workload scaling. See the image below. Note that Vertical Cluster scaling is very uncommon approach, so it didn't came in the picture
