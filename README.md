@@ -1365,6 +1365,7 @@ In the above comamnds, you as administrator is responsible to final result. For 
   - Windows Pods can't be resized
 
 ### VPA (Vertical Pod Autoscaler)
+- NOTE: To see Docs, Search "AutoScaling Workloads", then find 'On Github' of Vertical autoscaling and open it. On Github page, change branch to master, and navigate to `docs > api.md`
 - VPA is not a k8s built-in feature. We should install it using Docs. It'll be deployed as Pods in kube-system namespace and CRDs and RBACs.
 - It observer metrics, adjust Pod resources if needs, and balance thresholds.
 - VPA will have 3 Pods in kube-system:
