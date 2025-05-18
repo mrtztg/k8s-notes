@@ -3053,7 +3053,7 @@ We can 2 concept in Docker:
   
 
 
-- If a Pod fails starting but can't see any logs in Pod itself, check `controller-manager` Pod's logs.
+- If a Pod fails starting but can't see any logs in Pod itself, check `controller-manager` and `scheduler` Pods' logs.
      
 ## Controlplane failures
 
@@ -3072,6 +3072,7 @@ We can 2 concept in Docker:
      - Otherwise, check the service in the host machine: `sudo journalctl -u kube-apiserver`
        
 - The logs of controlplane pods also located in `/var/log/pods/` path.
+- If `kubectl` is failing to connect to api-server, check api-server is running well using `crictl ps`.
   
 ## Networking troubleshooting
 - When you saw any networking related issue (like the service can't connect to Pod, or Pod can get IP, etc):
