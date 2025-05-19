@@ -526,6 +526,8 @@ In the above comamnds, you as administrator is responsible to final result. For 
   - `k exec -it myPod -- cat /logs/logs.txt` to print content of logs.txt file
   - `k exec -it myPod -- sh` to enter interactive command line of the container.
 
+- When available cpu or memory resources on the nodes reach their limit, Kubernetes will look for Pods that are using more resources than they requested. These will be the first candidates for termination. If some Pods containers have no resource requests/limits set, then by default those are considered to use more than requested. Kubernetes assigns Quality of Service classes to Pods based on the defined resources and limits.
+
 ## Cluster, Node and Namespace extra Notes
 
 - To see Node info (like how many clusters does it have access to), run `k config view`
