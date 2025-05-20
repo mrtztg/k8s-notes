@@ -1965,6 +1965,10 @@ In the above comamnds, you as administrator is responsible to final result. For 
 
 - When we have token of service account in hand, our application can use that token to authorize. For manual debugging, run something like `curl https://<kuberAddres>:<kuberPort>/api -insecure --header "Authoriation: Bearer <tokenOfServiceAccount>`
 
+- To use a ServiceAccount in a Pod and call against Cluster api-server, one example: 
+  - Run this in the Pod: `TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)`. 
+  - Run the api request: `curl -k https://kubernetes.default/api/v1/secrets -H "Authorization: Bearer ${TOKEN}"`
+
 ## Fetch images from Private Repositories
 
 - Other than public images, we use our own images in the Pod. But how should we pass login credentials of that Private Repository?
