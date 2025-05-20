@@ -808,6 +808,33 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - Run `k create -f my-daemon-set.yaml` to create and use `k get daemonset` to list.
   ![Daemon Sets](assets/images/35_daemonsets.jpg)
 
+- To create DaemonSet behaviour using Deployment, we should use `topologyKey`
+  ```yaml
+  ...
+    template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        id: very-important              
+    spec:
+      containers:
+      - image: nginx:1-alpine
+        name: container1                
+        resources: {}
+      - image: google/pause             
+        name: container2                
+      affinity:                                             # We should have affinity
+        podAntiAffinity:                                    
+          requiredDuringSchedulingIgnoredDuringExecution:   
+          - labelSelector:                                  
+              matchExpressions:                             
+              - key: id                                     
+                operator: In                                
+                values:                                     
+                - very-important                            
+            topologyKey: kubernetes.io/hostname             # This is they key element
+  ```
+
 ## Static Pods
 
 - Kubelet can create/delete Pods independently, without having Kubernetes Cluster to report to. Means it can create Pods even if Master Node and its controllers like api-server, scheduler, etcd, controller-manager don't exists. How? Using pod definitions in "static pod" directory.
