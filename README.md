@@ -1700,6 +1700,10 @@ In the above comamnds, you as administrator is responsible to final result. For 
 - In the following error, we see TLS verification failure. It means most likely crt is not signed at all, or signed by different CA than ETCD's CA:
   `addrConn.createTransport failed to connect to {Addr: "127.0.0.1:2379", ServerName: "127.0.0.1:2379", }. Err: connection error: desc = "transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate signed by unknown authority"`
 
+- To find out expiration date of k8s components, we have 2 ways:
+  - Find .crt of that component and decode it using `openssl x509 -noout -text -n ./{CERT_FILE}.crt`
+  - Or, run `kubeadm certs check-expiration`
+
 ### Sign Certificates using Kubectl
 
 - Any user that want to have access to the kube-apiserver need to use a certificate. The user should give his `csr` (Certificate Sign Request) to admin, and admin sign it using CA or kubernetes. But because signing the CSRs need `.key` file of CA, and key file should be kept only in the kubernetes server (for keeping secure), the signing process will be time challenging for the admin. Kubectl has a built-in command for signing CSRs. This is the process:
